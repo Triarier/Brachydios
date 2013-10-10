@@ -1,6 +1,5 @@
-  #neXUs
 begin sets;
-charset ndhf1st =   1-1183 1184 - 2000 2001-2183; 
+charset ndhf1st = 1-1183 1184-2183; 
 charset rbcl1st =2184-3527;
 charset rpoc23rd = 3528-4207;
 charset cprs = 4208-4308 \ 3 4309 - 4571\2;
