@@ -14,4 +14,8 @@ charset bla3=6954-6982\3;
 
 charpartition mine=TVM+G4{0.4}:ndhf1st, HKY+I{3123}+G4{3122,3124}:rbcl1st, GTR{1}+G:rpoc23rd, F81+G4{2}:cprs, K2P{3}+G4:phyb3rd, TNe{3}+I+G4{0.6,4.3}:set5_8S, GTR{5}+G:its2, TVM+G4{6}:gbss13rd, GTR{7}: bla1 bla2 bla3;
 
+
+charpartition mpine=TVM+G4{0.4}:ndhf1st, HKY+I{3123}+G4:rbcl1st, GTR{1}+G:rpoc23rd, F81+G4{2}:cprs, K2P{3}+G4:phyb3rd, TNe{3}+I+G4{0.6,4.3}:set5_8S, GTR{5}+G:its2, TVM+G4{6}:gbss13rd, GTR{7}: bla1 bla2 bla3;
+
+
 end;
