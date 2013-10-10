@@ -42,17 +42,30 @@ int grepFirstNumber(FILE* datei,char* vname){
 
 int grepSecondNumber(FILE* datei, char* vname){
   int c = getc(datei);
+  int onlyone = 0;
+  int spaces = 0;
   while(c == ' ') c = getc(datei);
   while(1){
     if(c == '\\' || c == ';') {
       *vname='\0';
       return 0;
     }
-    else if (c == ' ') c = getc(datei);
+    else if (c == ' '){ 
+      if(onlyone){ 
+        spaces =1;
+        c = getc(datei);
+      }
+      else c= getc(datei);
+    }
     else{
       if (c == '0' || c == '1' ||c == '2' ||c == '3' ||c == '4' ||c == '5' ||c == '6' ||c == '7' ||c == '8' ||c == '9'){
+        if(spaces){
+          *vname='\0';
+          return 77;
+        }
         *vname=c;
         vname++;
+        onlyone = 1;
         c = getc(datei);
       }
       else return 1;
@@ -66,6 +79,22 @@ int grepSteps(FILE* datei, char* vname){
   int nothing = 1;
   while(c == ' ') c = getc(datei);
   if(c == '\\') c = getc(datei);
+  else if(c == ';'){
+    if(nothing==1){ 
+      *vname='1';
+      vname++;
+    }
+    *vname = '\0';
+    return 0;
+  }
+  else if (c == '0' || c == '1' ||c == '2' ||c == '3' ||c == '4' ||c == '5' ||c == '6' ||c == '7' ||c == '8' ||c == '9'){
+    *vname='1';
+    vname++;
+    *vname='\0';
+    return 77;
+  }
+  else
+    return 1;
   while(1){
     if(c == ';') {
       if(nothing==1){ 
@@ -125,8 +154,8 @@ int main(int argc, char **argv) {
     if(charset_flag == 8){
       grepName(datei,vname);
       grepFirstNumber(datei,first_number);
-      grepSecondNumber(datei,second_number);
-      grepSteps(datei,step_number);
+      int more_numbone = grepSecondNumber(datei,second_number);
+      int more_numbtwo = grepSteps(datei,step_number);
 //      putc(getc(datei),stdout);
       printf("%s\n",vname);
       printf("%s\n",first_number);
@@ -142,6 +171,26 @@ int main(int argc, char **argv) {
       for(temp=0;step_number[temp]!='\0';temp++) lookup[i][3][temp]=step_number[temp];
       lookup[i][3][temp]='\0';
       i++;
+      while(more_numbone == 77 || more_numbtwo == 77){
+        fseek(datei, -1L, SEEK_CUR);
+        grepFirstNumber(datei,first_number);
+        more_numbone = grepSecondNumber(datei,second_number);
+        more_numbtwo = grepSteps(datei,step_number);
+        printf("%s\n",vname);
+        printf("%s\n",first_number);
+        printf("%s\n",second_number);
+        printf("%s\n",step_number);
+        int temp = 0;
+        for(temp=0;vname[temp]!='\0';temp++) lookup[i][0][temp]=vname[temp];
+        lookup[i][0][temp]='\0';
+        for(temp=0;first_number[temp]!='\0';temp++) lookup[i][1][temp]=first_number[temp];
+        lookup[i][1][temp]='\0';
+        for(temp=0;second_number[temp]!='\0';temp++) lookup[i][2][temp]=second_number[temp];
+        lookup[i][2][temp]='\0';
+        for(temp=0;step_number[temp]!='\0';temp++) lookup[i][3][temp]=step_number[temp];
+        lookup[i][3][temp]='\0';
+        i++;
+      }
       counter++;
       charset_flag = 0;
     }
