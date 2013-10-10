@@ -329,6 +329,7 @@ int main(int argc, char **argv) {
     printf("No sets have been found\n");
     return 5;
   }
+  int j=0;
   while( (c=getc(datei)) != EOF){
     if(charset_flag == 0 && c=='e' && end_counter==0) end_counter++;
     else if(charset_flag == 0 && c=='n' && end_counter==1) end_counter++;
@@ -406,7 +407,6 @@ int main(int argc, char **argv) {
     else if(charpart_flag == 11 && c=='o') charpart_flag++;
     else if(charpart_flag == 12 && c=='n') charpart_flag++;
     else if(charpart_flag == 13 && c==' '){
-      int j=0;
       int temp = 0;
       fseek(datei, -1L, SEEK_CUR);
       int name_right = grepName(datei,vname);
@@ -426,6 +426,7 @@ int main(int argc, char **argv) {
           partition_lookup[j][2][temp]='\0';
           printf("%s\n",pname);
           j++;
+          printf("%i\n",j);
           partition_counter++;
           more_mv_names = grepVName(datei,mod_v_name);  
         }
@@ -433,6 +434,7 @@ int main(int argc, char **argv) {
           for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_v_name[temp];
           partition_lookup[j][2][temp]='\0';
           j++;
+          printf("%i\n",j);
           partition_counter++; 
           grepModName(datei,mod_name, pname); 
           printf("%s\n",pname);
@@ -446,6 +448,7 @@ int main(int argc, char **argv) {
       for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_v_name[temp];
       partition_lookup[j][2][temp]='\0';
       j++;
+      printf("%i\n",j);
       partition_counter++;   
       charpart_flag = 0;
     }
@@ -456,18 +459,18 @@ int main(int argc, char **argv) {
     printf("No 'end;' for 'begin sets;' was found.\n");
     return 6;
   }
-  int j = 0;
+  int k = 0;
   printf("%i\n",counter);
   printf("%i\n",partition_counter);
   for(i=0;i<counter;i++){
-    for(j=0;j<4;j++){
-      printf("%s  ",lookup[i][j]);
+    for(k=0;k<4;k++){
+      printf("%s  ",lookup[i][k]);
      }
      printf("\n");
   }
   for(i=0;i<partition_counter;i++){
-    for(j=0;j<3;j++){
-      printf("%s  ",partition_lookup[i][j]);
+    for(k=0;k<3;k++){
+      printf("%s  ",partition_lookup[i][k]);
      }
      printf("\n");
   }
