@@ -137,7 +137,7 @@ int grepSteps(FILE* datei, char* vname){
   return 2;
 }
 
-int grepModName(FILE* datei, char* vname){
+int grepModName(FILE* datei, char* vname, char* pname){
   int c = getc(datei);\
   int empt = 1;
   while(c == ' ') c = getc(datei);
@@ -152,8 +152,48 @@ int grepModName(FILE* datei, char* vname){
         printf("No Model has been found\n");
         return -1;
       }
+      *pname = '{';
+      pname++;
+      *pname = '}';
+      pname++;
+      *pname = '\0';
       *vname= '\0';
       return 0;
+    }
+    if(c == '+'){
+      *pname = '{';
+      pname++;
+      *pname = '}';
+      pname++;
+      *pname = c;
+      pname++;
+      *vname = c;
+      vname++;
+      c = getc(datei);
+    }
+    if(c == '{'){
+      *pname= c;
+      pname++;
+      while((c = getc(datei)) != '}'){
+        if(c != ' '){
+          *pname = c;
+          pname++;
+        }
+      }
+      *pname = '}';
+      pname++;
+      c = getc(datei);
+      while(c == ' ') c = getc(datei);
+      if(c == '+'){
+        *pname = '+';
+        pname++;
+        c = getc(datei);
+      }
+      else {
+        *pname = '\0';
+        *vname= '\0';
+        return 0;
+      }
     }
     else{
       *vname=c,
@@ -241,7 +281,8 @@ int main(int argc, char **argv) {
   char lookup[30][4][30];
   char mod_name[30];
   char mod_v_name[30];
-  char partition_lookup[30][2][40];
+  char pname[30];
+  char partition_lookup[30][3][40];
   int i = 0;
   int true_nexus = 0;
   int set_start = 0;
@@ -370,38 +411,40 @@ int main(int argc, char **argv) {
       fseek(datei, -1L, SEEK_CUR);
       int name_right = grepName(datei,vname);
       if( name_right == -1) return -1;
-      grepModName(datei,mod_name); 
+      grepModName(datei,mod_name, pname);
+      printf("%s\n",pname);
       int more_mv_names = grepVName(datei,mod_v_name);
       while (more_mv_names != 0){
         fseek(datei, -1L, SEEK_CUR);
-        printf("%s\n",mod_name);
         for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][0][temp] = mod_name[temp];
         partition_lookup[j][0][temp]='\0';
+        for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][1][temp] = pname[temp];
+        partition_lookup[j][1][temp]='\0';
         if( more_mv_names == -1 ) return -1;
         else if( more_mv_names == 66){
-          printf("%s\n",mod_v_name);
-          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
-          partition_lookup[j][1][temp]='\0';
+          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_v_name[temp];
+          partition_lookup[j][2][temp]='\0';
+          printf("%s\n",pname);
           j++;
           partition_counter++;
           more_mv_names = grepVName(datei,mod_v_name);  
         }
         else if( more_mv_names == 77) {
-          printf("%s\n",mod_v_name);   
-          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
-          partition_lookup[j][1][temp]='\0';
+          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_v_name[temp];
+          partition_lookup[j][2][temp]='\0';
           j++;
           partition_counter++; 
-          grepModName(datei,mod_name); 
+          grepModName(datei,mod_name, pname); 
+          printf("%s\n",pname);
           more_mv_names = grepVName(datei,mod_v_name);  
         }
       }
-      printf("%s\n",mod_name);
       for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][0][temp] = mod_name[temp];
       partition_lookup[j][0][temp]='\0';
-      printf("%s\n",mod_v_name); 
-      for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
+      for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][1][temp] = pname[temp];
       partition_lookup[j][1][temp]='\0';
+      for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_v_name[temp];
+      partition_lookup[j][2][temp]='\0';
       j++;
       partition_counter++;   
       charpart_flag = 0;
@@ -423,7 +466,7 @@ int main(int argc, char **argv) {
      printf("\n");
   }
   for(i=0;i<partition_counter;i++){
-    for(j=0;j<2;j++){
+    for(j=0;j<3;j++){
       printf("%s  ",partition_lookup[i][j]);
      }
      printf("\n");
