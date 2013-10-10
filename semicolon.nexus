@@ -1,6 +1,6 @@
-#nexus
+#neXUs
 begin sets;
-charset ndhf1st = 1-1183 1184-2183; 
+charset nd;f1st =   1-1183 1184 - 2000 2001-2183; 
 charset rbcl1st =2184-3527;
 charset rpoc23rd = 3528-4207;
 charset cprs = 4208-4308 \ 3 4309 - 4571\2;
@@ -15,5 +15,3 @@ charset bla3=6954-6982\3;
 charpartition mine=TVM+G4:ndhf1st, HKY+I+G4:rbcl1st, GTR+G:rpoc23rd, F81+G4:cprs, K2P+G4:phyb3rd, TNe+I+G4:set5_8S, GTR+G:its2, TVM+G4:gbss13rd, GTR: bla1 bla2 bla3;
 
 end;
-charset bla3=6954-6982\3;
-

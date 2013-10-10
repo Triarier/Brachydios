@@ -11,6 +11,10 @@ int grepName(FILE* datei,char* vname){
     }
     else if (c == ' ') c = getc(datei);
     else{
+      if(c == ';') {
+        printf("The character ';' is not allowed in the name of a variable\n");
+        return -1;
+      }
       *vname=c;
       vname++;
       c = getc(datei);
@@ -133,7 +137,91 @@ int grepSteps(FILE* datei, char* vname){
   return 2;
 }
 
+int grepModName(FILE* datei, char* vname){
+  int c = getc(datei);\
+  int empt = 1;
+  while(c == ' ') c = getc(datei);
+  while(1){
+    if(c == ' ') c = getc(datei);
+    if(c == ';'){
+      printf("The character ';' is not allowed in the name of a variable\n");
+      return -1;
+    }
+    if(c == ':'){
+      if(empt){
+        printf("No Model has been found\n");
+        return -1;
+      }
+      *vname= '\0';
+      return 0;
+    }
+    else{
+      *vname=c,
+      vname++;
+      empt = 0;
+      c = getc(datei);
+    }
+  }
+  return 0;
+}
 
+int grepVName(FILE* datei, char* vname){
+  int c = getc(datei);
+  int empt = 1;
+  while(c == ' ') c = getc(datei);
+  while(1){
+    if(c == ';') {
+      if(empt){
+        printf("No text after ':' has been found");
+        return -1;
+      }
+      else {
+        *vname = '\0';
+        return 0;
+      }
+    }
+    if(c == ' ') {
+      while(c == ' ') c = getc(datei);
+      if(c == ';'){
+        if(empt){
+          printf("No text after ':' has been found");
+          return -1;
+        }
+        else{
+          *vname = '\0';        
+          return 0;
+        }
+      }
+      else if(c == ','){
+        if(empt){
+          printf("No text after ':' has been found");
+          return -1;
+        }
+        c = getc(datei);
+        return 77;
+      }
+      else{
+        *vname= '\0';
+        return 66;
+      }
+    }
+    if(c == ','){
+      if(empt){
+        printf("No text after ':' has been found");
+        return -1;
+      }
+      c = getc(datei);
+      return 77;
+    }
+    else{
+      *vname=c;
+      vname++;
+      empt = 0;
+      c = getc(datei);
+    }
+  }
+return 0;
+}
 
 int main(int argc, char **argv) {
   FILE *datei; 
@@ -145,14 +233,20 @@ int main(int argc, char **argv) {
   datei=fopen(argv[1],"rb");
   int charset_flag = 0;  
   int counter = 0;
+  int charpart_flag = 0;  
   char vname[30];
   char first_number[30];
   char second_number[30];
   char step_number[30];
   char lookup[30][4][30];
+  char mod_name[30];
+  char mod_v_name[30];
+  char partition_lookup[30][2][40];
   int i = 0;
   int true_nexus = 0;
   int set_start = 0;
+  int end_counter = 0;
+  int partition_counter = 0;
   while( (c=getc(datei)) != EOF && true_nexus != 6){
     while(c==' ' || c == '\t') c = getc(datei);
     if (c<91 && c>64) c+= 32;
@@ -195,6 +289,12 @@ int main(int argc, char **argv) {
     return 5;
   }
   while( (c=getc(datei)) != EOF){
+    if(charset_flag == 0 && c=='e' && end_counter==0) end_counter++;
+    else if(charset_flag == 0 && c=='n' && end_counter==1) end_counter++;
+    else if(charset_flag == 0 && c=='d' && end_counter==2) end_counter++;
+    else if(charset_flag == 0 && c==';' && end_counter==3) end_counter++;
+    else end_counter=0;
+    if(end_counter==4) break;
     if(charset_flag == 0 && c=='c') charset_flag++;
     else if(charset_flag == 1 && c=='h') charset_flag++;
     else if(charset_flag == 2 && c=='a') charset_flag++;
@@ -205,7 +305,8 @@ int main(int argc, char **argv) {
     else if(charset_flag == 7 && c==' ') charset_flag++;
     else if(charset_flag == 8){
       fseek(datei, -1L, SEEK_CUR);
-      grepName(datei,vname);
+      int name_right = grepName(datei,vname);
+      if( name_right == -1) return -1;
       grepFirstNumber(datei,first_number);
       int more_numbone = grepSecondNumber(datei,second_number);
       int more_numbtwo = grepSteps(datei,step_number);
@@ -250,12 +351,80 @@ int main(int argc, char **argv) {
     }
     else 
       charset_flag = 0;
+    if(charpart_flag == 0 && c=='c') charpart_flag++;
+    else if(charpart_flag == 1 && c=='h') charpart_flag++;
+    else if(charpart_flag == 2 && c=='a') charpart_flag++;
+    else if(charpart_flag == 3 && c=='r') charpart_flag++;
+    else if(charpart_flag == 4 && c=='p') charpart_flag++;
+    else if(charpart_flag == 5 && c=='a') charpart_flag++;
+    else if(charpart_flag == 6 && c=='r') charpart_flag++;
+    else if(charpart_flag == 7 && c=='t') charpart_flag++;
+    else if(charpart_flag == 8 && c=='i') charpart_flag++;
+    else if(charpart_flag == 9 && c=='t') charpart_flag++;
+    else if(charpart_flag == 10 && c=='i') charpart_flag++;
+    else if(charpart_flag == 11 && c=='o') charpart_flag++;
+    else if(charpart_flag == 12 && c=='n') charpart_flag++;
+    else if(charpart_flag == 13 && c==' '){
+      int j=0;
+      int temp = 0;
+      fseek(datei, -1L, SEEK_CUR);
+      int name_right = grepName(datei,vname);
+      if( name_right == -1) return -1;
+      grepModName(datei,mod_name); 
+      int more_mv_names = grepVName(datei,mod_v_name);
+      while (more_mv_names != 0){
+        fseek(datei, -1L, SEEK_CUR);
+        printf("%s\n",mod_name);
+        for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][0][temp] = mod_name[temp];
+        partition_lookup[j][0][temp]='\0';
+        if( more_mv_names == -1 ) return -1;
+        else if( more_mv_names == 66){
+          printf("%s\n",mod_v_name);
+          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
+          partition_lookup[j][1][temp]='\0';
+          j++;
+          partition_counter++;
+          more_mv_names = grepVName(datei,mod_v_name);  
+        }
+        else if( more_mv_names == 77) {
+          printf("%s\n",mod_v_name);   
+          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
+          partition_lookup[j][1][temp]='\0';
+          j++;
+          partition_counter++; 
+          grepModName(datei,mod_name); 
+          more_mv_names = grepVName(datei,mod_v_name);  
+        }
+      }
+      printf("%s\n",mod_name);
+      for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][0][temp] = mod_name[temp];
+      partition_lookup[j][0][temp]='\0';
+      printf("%s\n",mod_v_name); 
+      for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
+      partition_lookup[j][1][temp]='\0';
+      j++;
+      partition_counter++;   
+      charpart_flag = 0;
+    }
+    else
+      charpart_flag = 0; 
+  }
+  if(end_counter != 4) {
+    printf("No 'end;' for 'begin sets;' was found.\n");
+    return 6;
   }
   int j = 0;
   printf("%i\n",counter);
+  printf("%i\n",partition_counter);
   for(i=0;i<counter;i++){
     for(j=0;j<4;j++){
       printf("%s  ",lookup[i][j]);
+     }
+     printf("\n");
+  }
+  for(i=0;i<partition_counter;i++){
+    for(j=0;j<2;j++){
+      printf("%s  ",partition_lookup[i][j]);
      }
      printf("\n");
   }
