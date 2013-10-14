@@ -284,7 +284,7 @@ int main(int argc, char **argv) {
   char mod_name[30];
   char mod_v_name[30];
   char pname[30];
-  char partition_lookup[30][3][40];
+  char partition_lookup[30][4][40];
   int i = 0;
   int true_nexus = 0;
   int set_start = 0;
@@ -404,37 +404,42 @@ int main(int argc, char **argv) {
       fseek(datei, -1L, SEEK_CUR);
       int name_right = grepName(datei,vname);
       if( name_right == -1) return -1;
+      printf("NAME: %s\n",vname);
       grepModName(datei,mod_name, pname);
       int more_mv_names = grepVName(datei,mod_v_name);
       while (more_mv_names != 0){
         fseek(datei, -1L, SEEK_CUR);
-        for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][0][temp] = mod_name[temp];
+        for(temp=0;vname[temp]!='\0';temp++)partition_lookup[j][0][temp] = vname[temp];
         partition_lookup[j][0][temp]='\0';
-        for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][1][temp] = pname[temp];
+        for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_name[temp];
         partition_lookup[j][1][temp]='\0';
+        for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][2][temp] = pname[temp];
+        partition_lookup[j][2][temp]='\0';
         if( more_mv_names == -1 ) return -1;
         else if( more_mv_names == 66){
-          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_v_name[temp];
-          partition_lookup[j][2][temp]='\0';
+          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][3][temp] = mod_v_name[temp];
+          partition_lookup[j][3][temp]='\0';
           j++;
           partition_counter++;
           more_mv_names = grepVName(datei,mod_v_name);  
         }
         else if( more_mv_names == 77) {
-          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_v_name[temp];
-          partition_lookup[j][2][temp]='\0';
+          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][3][temp] = mod_v_name[temp];
+          partition_lookup[j][3][temp]='\0';
           j++;
           partition_counter++; 
           grepModName(datei,mod_name, pname); 
           more_mv_names = grepVName(datei,mod_v_name);  
         }
       }
-      for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][0][temp] = mod_name[temp];
+      for(temp=0;vname[temp]!='\0';temp++)partition_lookup[j][0][temp] = vname[temp];
       partition_lookup[j][0][temp]='\0';
-      for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][1][temp] = pname[temp];
+      for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_name[temp];
       partition_lookup[j][1][temp]='\0';
-      for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_v_name[temp];
+      for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][2][temp] = pname[temp];
       partition_lookup[j][2][temp]='\0';
+      for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][3][temp] = mod_v_name[temp];
+      partition_lookup[j][3][temp]='\0';
       j++;
       partition_counter++;   
       charpart_flag = 0;
@@ -454,7 +459,7 @@ int main(int argc, char **argv) {
      printf("\n");
   }
   for(i=0;i<partition_counter;i++){
-    for(k=0;k<3;k++){
+    for(k=0;k<4;k++){
       printf("%s  ",partition_lookup[i][k]);
      }
      printf("\n");
