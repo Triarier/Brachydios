@@ -406,6 +406,7 @@ int main(int argc, char **argv) {
       int temp = 0;
       fseek(datei, -1L, SEEK_CUR);
       int name_right = grepName(datei,vname);
+      // check if 'all' is set
       if(argc==3){
         if(test[0]=='a' && test[1]=='l' && test[2]=='l'){
           vname[0] = 'a';
