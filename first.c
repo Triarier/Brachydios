@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#define SET_TAB_DIM1 100
+#define SET_TAB_DIM1 2000
 #define SET_TAB_DIM2 5
-#define SET_TAB_DIM3 100
-#define PART_TAB_DIM1 100
+#define SET_TAB_DIM3 20
+#define PART_TAB_DIM1 2000
 #define PART_TAB_DIM2 6
-#define PART_TAB_DIM3 100
+#define PART_TAB_DIM3 20
 int* find_set(char* set_name,char (*look_up)[SET_TAB_DIM2][SET_TAB_DIM3],int len){
   int* ind;
   int counter;
@@ -19,7 +19,7 @@ int* find_set(char* set_name,char (*look_up)[SET_TAB_DIM2][SET_TAB_DIM3],int len
   ind = calloc(cu_len,sizeof(int));
   if(ind == NULL){ 
     printf("Not enough virtual RAM can be allocated\n");
-    return EXIT_FAILURE;
+    exit(EXIT_FAILURE);
   }
   for(i=0;i<len;i++){
     help = &(look_up[i][0][0]);
@@ -36,12 +36,16 @@ int* find_set(char* set_name,char (*look_up)[SET_TAB_DIM2][SET_TAB_DIM3],int len
         ind = realloc(ind,cu_len*sizeof(int));
         if(ind == NULL) {
           printf("Not enough virtual RAM can be allocated\n");
-          return EXIT_FAILURE;
+          exit(EXIT_FAILURE);
         }
       }
     }
   }
   ind[0]=counter;
+  if(counter==0){
+    printf("Partition could not be build. Is the right charset existent?");
+    exit(EXIT_FAILURE);
+  }
   return ind;
 }
 
@@ -369,7 +373,7 @@ int main(int argc, char **argv) {
   char pname[100];
   char partition_lookup[PART_TAB_DIM1][PART_TAB_DIM2][PART_TAB_DIM3];
   char set_len[30];
-  int set_look_len;
+  char new_pos[30];
   int i;
   int j;
   int k;
@@ -555,7 +559,13 @@ int main(int argc, char **argv) {
           temp_summe =0;
           for(temp=1;temp<ind[0]+1;temp++)temp_summe+= charint(&(lookup[ind[temp]][4][0]));
           free(ind);
+          intchar(new_pos,1,current_pos+1,1);
+          for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][4][temp] = new_pos[temp];
+          partition_lookup[j][4][temp]='\0';
           current_pos += temp_summe;
+          intchar(new_pos,1,current_pos,1);
+          for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][5][temp] = new_pos[temp];
+          partition_lookup[j][5][temp]='\0';
           j++;
           partition_counter++;
           more_mv_names = grepVName(datei,mod_v_name);  
@@ -567,7 +577,13 @@ int main(int argc, char **argv) {
           temp_summe =0;
           for(temp=1;temp<ind[0]+1;temp++)temp_summe+= charint(&(lookup[ind[temp]][4][0]));
           free(ind);
+          intchar(new_pos,1,current_pos+1,1);
+          for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][4][temp] = new_pos[temp];
+          partition_lookup[j][4][temp]='\0';
           current_pos += temp_summe;
+          intchar(new_pos,1,current_pos,1);
+          for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][5][temp] = new_pos[temp];
+          partition_lookup[j][5][temp]='\0';
           j++;
           partition_counter++; 
           grepModName(datei,mod_name, pname); 
@@ -586,8 +602,13 @@ int main(int argc, char **argv) {
       temp_summe =0;
       for(temp=1;temp<ind[0]+1;temp++)temp_summe+= charint(&(lookup[ind[temp]][4][0]));
       free(ind);
+      intchar(new_pos,1,current_pos+1,1);
+      for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][4][temp] = new_pos[temp];
+      partition_lookup[j][4][temp]='\0';
       current_pos += temp_summe;
-
+      intchar(new_pos,1,current_pos,1);
+      for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][5][temp] = new_pos[temp];
+      partition_lookup[j][5][temp]='\0';
       j++;
       partition_counter++;   
       charpart_flag = 0;
@@ -607,7 +628,7 @@ int main(int argc, char **argv) {
      printf("\n");
   }
   for(i=0;i<partition_counter;i++){
-    for(k=0;k<4;k++){
+    for(k=0;k<6;k++){
       printf("%s  ",partition_lookup[i][k]);
      }
      printf("\n");
