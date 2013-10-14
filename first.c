@@ -272,6 +272,9 @@ int main(int argc, char **argv) {
     printf("Please set a nexus file as first parameter\n E.g: \" rathian Filename \"\n");
     return 1;
   }
+  char *test = 0;
+  if(argc==3) 
+    test = argv[2];
   datei=fopen(argv[1],"rb");
   int charset_flag = 0;  
   int counter = 0;
@@ -284,7 +287,7 @@ int main(int argc, char **argv) {
   char mod_name[30];
   char mod_v_name[30];
   char pname[30];
-  char partition_lookup[30][4][40];
+  char partition_lookup[100][4][100];
   int i = 0;
   int true_nexus = 0;
   int set_start = 0;
@@ -403,6 +406,14 @@ int main(int argc, char **argv) {
       int temp = 0;
       fseek(datei, -1L, SEEK_CUR);
       int name_right = grepName(datei,vname);
+      if(argc==3){
+        if(test[0]=='a' && test[1]=='l' && test[2]=='l'){
+          vname[0] = 'a';
+          vname[1] = 'l';
+          vname[2] = 'l';
+          vname[3] = '\0';
+        }
+      }
       if( name_right == -1) return -1;
       grepModName(datei,mod_name, pname);
       int more_mv_names = grepVName(datei,mod_v_name);
