@@ -404,7 +404,6 @@ int main(int argc, char **argv) {
       fseek(datei, -1L, SEEK_CUR);
       int name_right = grepName(datei,vname);
       if( name_right == -1) return -1;
-      printf("NAME: %s\n",vname);
       grepModName(datei,mod_name, pname);
       int more_mv_names = grepVName(datei,mod_v_name);
       while (more_mv_names != 0){
