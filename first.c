@@ -3,17 +3,18 @@
 #include <ctype.h>
 #define SET_LENG 10
 #define SET_TAB_DIM3 20
-#define PART_TAB_DIM1 1000
+#define PART_TAB_DIM1 10
 #define PART_TAB_DIM2 4
-#define PART_TAB_DIM3 20
-#define PART_LENG 1000
+#define PART_TAB_DIM3 300
+#define PART_LENG 10
 /*copy from 1 to 2 */
 void copy_str(char* str1,char* str2){
   int i;
-  for(i=0;str1[i]!='\0';i++) str2[i]=str1[i];
+  for(i=0;str1[i]!='\0';i++) 
+    str2[i]=str1[i];
   str2[i]='\0';
 }
-
+/* Finde indexes of the right sets. Returning an int*. Int[0] tells the number of found indexes */
 int* find_set(char* set_name,char** look_up,int len){
   int* ind;
   int counter;
@@ -57,7 +58,7 @@ int* find_set(char* set_name,char** look_up,int len){
 }
 
 
-
+/* Converts a char[] to an int */
 int charint(char* temp){
   int i;
   int n;
@@ -68,7 +69,7 @@ int charint(char* temp){
   }
   return n;
 }
-
+/* Converts an int to a char[] */
 void intchar(char* temp,int fn,int sn, int st){
   int n;
   int i;
@@ -83,6 +84,7 @@ void intchar(char* temp,int fn,int sn, int st){
     n/=10;
   }
 }
+/* Greps the name of the variable */
 int grepName(FILE* datei,char* vname){
   int c;
   c = getc(datei);
@@ -105,7 +107,7 @@ int grepName(FILE* datei,char* vname){
   }
   return 2;
 }
-
+/* Greps the starting number */
 int grepFirstNumber(FILE* datei,char* vname){
   int c;
   c = getc(datei);
@@ -127,7 +129,7 @@ int grepFirstNumber(FILE* datei,char* vname){
   }
   return 2;
 }
-
+/* Greps the end number and tells if there are more start/end points */
 int grepSecondNumber(FILE* datei, char* vname){
   int c;
   int onlyone;
@@ -164,6 +166,7 @@ int grepSecondNumber(FILE* datei, char* vname){
   }
   return 2;
 }
+/* Greps the Stepnumber and tells if there are more start/end point */ 
 int grepSteps(FILE* datei, char* vname){
   int c;
   int nothing;
@@ -297,6 +300,8 @@ int grepModName(FILE* datei, char* vname, char* pname){
       c = getc(datei);
     }
   }
+  *pname = '\0';
+  *vname = '\0';
   return 0;
 }
 
@@ -378,7 +383,7 @@ int main(int argc, char **argv) {
   char mod_name[30];
   char mod_v_name[30];
   char pname[100];
-  char partition_lookup[PART_TAB_DIM1][PART_TAB_DIM2][PART_TAB_DIM3];
+  char ***partition_lookup,***partition_lookup2;
   char new_pos[30];
   int i;
   int j;
@@ -399,8 +404,8 @@ int main(int argc, char **argv) {
   size_t* pset_sn,*pset_sn2;
   size_t* pset_st,*pset_st2;
   size_t* pset_leng,*pset_leng2;
-  size_t* ppart_fn;
-  size_t* ppart_sn;
+  size_t* ppart_fn,* ppart_fn2;
+  size_t* ppart_sn,* ppart_sn2;
   size_t set_leng;
   size_t part_leng;
   set_leng = SET_LENG;
@@ -411,6 +416,14 @@ int main(int argc, char **argv) {
   pset_leng = (size_t*) malloc(sizeof(size_t)*set_leng);
   ppart_fn = (size_t*) malloc(sizeof(size_t)*part_leng);
   ppart_sn = (size_t*) malloc(sizeof(size_t)*part_leng);
+  partition_lookup = (char ***) malloc(sizeof(char**)*part_leng);
+  for(i=0;i<part_leng;i++)
+    partition_lookup[i]= (char **) malloc(sizeof(char*)*PART_TAB_DIM2);
+  for(i=0;i<part_leng;i++){
+    for(j=0;j<PART_TAB_DIM2;j++){
+      partition_lookup[i][j]= (char *) malloc(sizeof(char)*PART_TAB_DIM3);
+    }
+  }
   lookup = (char **) malloc(sizeof(char*)*set_leng);
   for(i=0;i<set_leng;i++)
     lookup[i]= (char*) malloc(sizeof(char*)*SET_TAB_DIM3);
@@ -573,7 +586,6 @@ int main(int argc, char **argv) {
               fprintf(stderr, "Not enought virtual RAM could have been allocated.");
               return EXIT_FAILURE;
             }
-/*fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);*/
             if(k<(set_leng/2)) copy_str(&lookup[k][0],&lookup2[k][0]);
           }
           for(k=0;k<(set_leng/2);k++) free(lookup[k]);
@@ -660,6 +672,49 @@ int main(int argc, char **argv) {
           ppart_sn[j]=current_pos;
           intchar(new_pos,1,current_pos,1);
           j++;
+          if(j==part_leng){
+            part_leng *= 2;  
+            partition_lookup2 = (char***) malloc(sizeof(char**)*part_leng);
+            if(partition_lookup2 == NULL) {
+              fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+              return EXIT_FAILURE;
+            }
+            for(k=0;k<part_leng;k++){
+              partition_lookup2[k] = (char**) malloc(sizeof(char*)*PART_TAB_DIM2);
+              if(partition_lookup2[k] == NULL) {
+                fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+                return EXIT_FAILURE;
+              }
+            }  
+/* fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__); */
+            for(k=0;k<part_leng;k++){
+              for(temp=0;temp<PART_TAB_DIM2;temp++){
+                partition_lookup2[k][temp]= (char*) malloc(sizeof(char)*PART_TAB_DIM3);
+                if(partition_lookup2[k][temp] == NULL) {
+                  fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+                  return EXIT_FAILURE;
+                }
+                if(k<(part_leng/2))
+                  copy_str(&(partition_lookup[k][temp][0]),&(partition_lookup2[k][temp][0]));
+              }
+            }
+            for(k=0;k<(part_leng/2);k++){
+              for(temp=0;temp<PART_TAB_DIM2;temp++){
+                free(partition_lookup[k][temp]);
+              }
+            }
+            for(k=0;k<(part_leng/2);k++) free(partition_lookup[k]);
+            free(partition_lookup);
+            partition_lookup = partition_lookup2;
+            ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
+            ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
+            for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
+            for(k=0;k<(part_leng/2);k++) ppart_sn2[k]=ppart_sn[k];
+            free(ppart_fn);
+            free(ppart_sn);
+            ppart_fn=ppart_fn2;
+            ppart_sn=ppart_sn2;
+          }
           partition_counter++;
           more_mv_names = grepVName(datei,mod_v_name);
         }
@@ -676,9 +731,51 @@ int main(int argc, char **argv) {
           ppart_sn[j]=current_pos;
           intchar(new_pos,1,current_pos,1);
           j++;
+          if(j==part_leng){
+            part_leng *= 2;  
+            partition_lookup2 = (char***) malloc(sizeof(char**)*part_leng);
+            if(partition_lookup2 == NULL) {
+              fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+              return EXIT_FAILURE;
+            }
+            for(k=0;k<part_leng;k++){
+              partition_lookup2[k] = (char**) malloc(sizeof(char*)*PART_TAB_DIM2);
+              if(partition_lookup2[k] == NULL) {
+                fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+                return EXIT_FAILURE;
+              }
+            }  
+            for(k=0;k<part_leng;k++){
+              for(temp=0;temp<PART_TAB_DIM2;temp++){
+                partition_lookup2[k][temp]= (char*) malloc(sizeof(char)*PART_TAB_DIM3);
+                if(partition_lookup2[k][temp] == NULL) {
+                  fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+                  return EXIT_FAILURE;
+                }
+                if(k<(part_leng/2))copy_str(&(partition_lookup[k][temp][0]),&(partition_lookup2[k][temp][0]));
+              }
+            }
+            for(k=0;k<(part_leng/2);k++){
+              for(temp=0;temp<PART_TAB_DIM2;temp++){
+                free(partition_lookup[k][temp]);
+              }
+            }
+            for(k=0;k<(part_leng/2);k++) free(partition_lookup[k]);
+            free(partition_lookup);
+            partition_lookup = partition_lookup2;
+            ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
+            ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
+            for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
+            for(k=0;k<(part_leng/2);k++) ppart_sn2[k]=ppart_sn[k];
+            free(ppart_fn);
+            free(ppart_sn);
+            ppart_fn=ppart_fn2;
+            ppart_sn=ppart_sn2;
+          }
           partition_counter++;
           grepModName(datei,mod_name, pname);
           more_mv_names = grepVName(datei,mod_v_name);
+
         }
       }
       for(temp=0;vname[temp]!='\0';temp++)partition_lookup[j][0][temp] = vname[temp];
@@ -689,6 +786,7 @@ int main(int argc, char **argv) {
       partition_lookup[j][2][temp]='\0';
       for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][3][temp] = pname[temp];
       partition_lookup[j][3][temp]='\0';
+      
       ind = find_set(mod_v_name,lookup,set_leng);
       temp_summe =0;
       for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
@@ -699,6 +797,47 @@ int main(int argc, char **argv) {
       ppart_sn[j]= current_pos;
       intchar(new_pos,1,current_pos,1);
       j++;
+      if(j==part_leng){
+        part_leng =2;  
+        partition_lookup2 = (char***) malloc(sizeof(char**)*part_leng);
+        if(partition_lookup2 == NULL) {
+          fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+          return EXIT_FAILURE;
+        }
+        for(k=0;k<part_leng;k++){
+          partition_lookup2[k] = (char**) malloc(sizeof(char*)*PART_TAB_DIM2);
+          if(partition_lookup2[k] == NULL) {
+            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+            return EXIT_FAILURE;
+          }
+        }  
+        for(k=0;k<part_leng;k++){
+          for(temp=0;temp<PART_TAB_DIM2;temp++){
+            partition_lookup2[k][temp]= (char*) malloc(sizeof(char)*PART_TAB_DIM3);
+            if(partition_lookup2[k][temp] == NULL) {
+              fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+              return EXIT_FAILURE;
+            }
+            if(k<(part_leng/2))copy_str(&(partition_lookup[k][temp][0]),&(partition_lookup2[k][temp][0]));
+          }
+        }
+        for(k=0;k<(part_leng/2);k++){
+          for(temp=0;temp<PART_TAB_DIM2;temp++){
+            free(partition_lookup[k][temp]);
+          }
+        }
+        for(k=0;k<(part_leng/2);k++) free(partition_lookup[k]);
+        free(partition_lookup);
+        partition_lookup = partition_lookup2;
+        ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
+        ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
+        for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
+        for(k=0;k<(part_leng/2);k++) ppart_sn2[k]=ppart_sn[k];
+        free(ppart_fn);
+        free(ppart_sn);
+        ppart_fn=ppart_fn2;
+        ppart_sn=ppart_sn2;
+      }
       partition_counter++;
       charpart_flag = 0;
     }
