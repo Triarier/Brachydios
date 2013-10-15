@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#define SET_LENG 100
-#define SET_TAB_DIM1 100
-#define SET_TAB_DIM2 5
+#define SET_LENG 10
 #define SET_TAB_DIM3 20
 #define PART_TAB_DIM1 1000
-#define PART_TAB_DIM2 6
+#define PART_TAB_DIM2 4
 #define PART_TAB_DIM3 20
 #define PART_LENG 1000
-int* find_set(char* set_name,char*** look_up,int len){
+/*copy from 1 to 2 */
+void copy_str(char* str1,char* str2){
+  int i;
+  for(i=0;str1[i]!='\0';i++) str2[i]=str1[i];
+  str2[i]='\0';
+}
+
+int* find_set(char* set_name,char** look_up,int len){
   int* ind;
   int counter;
   char* help;
@@ -24,7 +29,7 @@ int* find_set(char* set_name,char*** look_up,int len){
     exit(EXIT_FAILURE);
   }
   for(i=0;i<len;i++){
-    help = &(look_up[i][0][0]);
+    help = &(look_up[i][0]);
     hit = 0;
     for(j=0;help[j]!='\0' && set_name[j]!='\0';j++){
       if(help[j]!=set_name[j]) break;
@@ -369,12 +374,11 @@ int main(int argc, char **argv) {
   char first_number[30];
   char second_number[30];
   char step_number[30];
-  char ***lookup,***lookup2;
+  char **lookup,**lookup2;
   char mod_name[30];
   char mod_v_name[30];
   char pname[100];
   char partition_lookup[PART_TAB_DIM1][PART_TAB_DIM2][PART_TAB_DIM3];
-  char set_len[30];
   char new_pos[30];
   int i;
   int j;
@@ -391,39 +395,25 @@ int main(int argc, char **argv) {
   int more_mv_names;
   int temp;
   int* ind;
-  int set_len_dim1;
-  size_t* pset_fn;
-  size_t* pset_sn;
-  size_t* pset_st;
-  size_t* pset_leng;
+  size_t* pset_fn,*pset_fn2;
+  size_t* pset_sn,*pset_sn2;
+  size_t* pset_st,*pset_st2;
+  size_t* pset_leng,*pset_leng2;
   size_t* ppart_fn;
   size_t* ppart_sn;
-  size_t set_fn;
-  size_t set_sn;
-  size_t set_st;
   size_t set_leng;
   size_t part_leng;
-  set_fn = SET_LENG;
-  set_sn = SET_LENG;
-  set_st = SET_LENG;
   set_leng = SET_LENG;
   part_leng=PART_LENG;
-  pset_fn = (size_t*) malloc(sizeof(size_t)*set_fn);
-  pset_sn = (size_t*) malloc(sizeof(size_t)*set_sn);
-  pset_st = (size_t*) malloc(sizeof(size_t)*set_st);
+  pset_fn = (size_t*) malloc(sizeof(size_t)*set_leng);
+  pset_sn = (size_t*) malloc(sizeof(size_t)*set_leng);
+  pset_st = (size_t*) malloc(sizeof(size_t)*set_leng);
   pset_leng = (size_t*) malloc(sizeof(size_t)*set_leng);
   ppart_fn = (size_t*) malloc(sizeof(size_t)*part_leng);
   ppart_sn = (size_t*) malloc(sizeof(size_t)*part_leng);
-  
-  set_len_dim1 = SET_TAB_DIM1;
-  lookup = (char ***) malloc(sizeof(char**)*SET_TAB_DIM1);
-  for(i=0;i<SET_TAB_DIM1;i++)
-    lookup[i]= (char**) malloc(sizeof(char*)*SET_TAB_DIM2);
-  for(i=0;i<SET_TAB_DIM1;i++){
-    for(j=0;j<SET_TAB_DIM2;j++){
-      lookup[i][j]= (char*) malloc(sizeof(char)*SET_TAB_DIM3);
-    }
-  }
+  lookup = (char **) malloc(sizeof(char*)*set_leng);
+  for(i=0;i<set_leng;i++)
+    lookup[i]= (char*) malloc(sizeof(char*)*SET_TAB_DIM3);
   current_pos=0;
   temp = 0;
   if(argc<2){
@@ -506,14 +496,8 @@ int main(int argc, char **argv) {
       grepFirstNumber(datei,first_number);
       more_numbone = grepSecondNumber(datei,second_number);
       more_numbtwo = grepSteps(datei,step_number);
-      for(temp=0;vname[temp]!='\0';temp++) lookup[i][0][temp]=vname[temp];
-      lookup[i][0][temp]='\0';
-      for(temp=0;first_number[temp]!='\0';temp++) lookup[i][1][temp]=first_number[temp];
-      lookup[i][1][temp]='\0';
-      for(temp=0;second_number[temp]!='\0';temp++) lookup[i][2][temp]=second_number[temp];
-      lookup[i][2][temp]='\0';
-      for(temp=0;step_number[temp]!='\0';temp++) lookup[i][3][temp]=step_number[temp];
-      lookup[i][3][temp]='\0';
+      for(temp=0;vname[temp]!='\0';temp++) lookup[i][temp]=vname[temp];
+      lookup[i][temp]='\0';
       fn = charint(first_number);
       sn = charint(second_number);
       st = charint(step_number);
@@ -521,40 +505,47 @@ int main(int argc, char **argv) {
       pset_sn[i]=charint(second_number);
       pset_st[i]=charint(step_number);
       pset_leng[i]=(sn-fn)/st+1;
-      intchar(set_len,fn,sn,st);
-      for(temp=0;set_len[temp]!='\0';temp++) lookup[i][4][temp] = set_len[temp];
-      lookup[i][4][temp]='\0';
       i++;
-      if(i>=set_len_dim1){
-        set_len_dim1*=2;
-fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
-        if((lookup2 = (char***) realloc(lookup,set_len_dim1)) == NULL) {
-fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
+      if(i==set_leng){
+        set_leng=set_leng *2;
+        lookup2 = (char **) malloc(sizeof(char*)*set_leng);
+        if(lookup2 == NULL) {
           fprintf(stderr, "Not enought virtual RAM could have been allocated.");
           return EXIT_FAILURE;
         }
-        else lookup=lookup2;
-fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
-        for(temp=0;temp<set_len_dim1;temp++){
-fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
-          lookup2[temp]= (char**) realloc(lookup[temp],SET_TAB_DIM2);
-          if(lookup2==NULL){
-          printf("Not enought virtual RAM could have been allocated.");
+        for(k=0;k<set_leng;k++){
+          lookup2[k]= (char*) malloc(sizeof(char*)*SET_TAB_DIM3);
+          if(lookup2[k]==NULL){
+            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+            return EXIT_FAILURE;
+          }
+          if(k<(set_leng/2)) copy_str(&lookup[k][0],&lookup2[k][0]);
+        }
+        for(k=0;k<(set_leng/2);k++) free(lookup[k]);
+        free(lookup);
+        lookup=lookup2;
+        pset_leng2 = malloc(sizeof(size_t)*set_leng);
+        pset_fn2 = malloc(sizeof(size_t)*set_leng);
+        pset_sn2 = malloc(sizeof(size_t)*set_leng);
+        pset_st2 = malloc(sizeof(size_t)*set_leng);
+        if(pset_leng2 == NULL || pset_fn2 == NULL || pset_sn2 == NULL || pset_st2 == NULL){
+          fprintf(stderr, "Not enought virtual RAM could have been allocated.");
           return EXIT_FAILURE;
-          }
-          else lookup[temp]=lookup2[temp];
         }
-fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
-        for(temp=0;temp<set_len_dim1;temp++){
-fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
-          for(k=0;j<SET_TAB_DIM2;k++){
-            if((lookup2[temp][k]= (char*) realloc(lookup[temp][k],sizeof(char)*SET_TAB_DIM3))==NULL){
-              printf("Not enought virtual RAM could have been allocated.");
-              return EXIT_FAILURE;
-            }
-            else lookup[temp][k]=lookup2[temp][k];
-          }
+        for(k=0;k<(set_leng/2);k++){
+          pset_leng2[k]=pset_leng[k];
+          pset_fn2[k]=pset_fn[k];
+          pset_sn2[k]=pset_sn[k];
+          pset_st2[k]=pset_st[k];
         }
+        free(pset_st);
+        free(pset_sn);
+        free(pset_fn);
+        free(pset_leng);
+        pset_sn=pset_sn2;
+        pset_fn=pset_fn2;
+        pset_leng=pset_leng2;
+        pset_st=pset_st2;
       }
       while(more_numbone == 77 || more_numbtwo == 77){
         fseek(datei, -1L, SEEK_CUR);
@@ -562,50 +553,54 @@ fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
         more_numbone = grepSecondNumber(datei,second_number);
         more_numbtwo = grepSteps(datei,step_number);
         temp = 0;
-        for(temp=0;vname[temp]!='\0';temp++) lookup[i][0][temp]=vname[temp];
-        lookup[i][0][temp]='\0';
-        for(temp=0;first_number[temp]!='\0';temp++) lookup[i][1][temp]=first_number[temp];
-        lookup[i][1][temp]='\0';
-        for(temp=0;second_number[temp]!='\0';temp++) lookup[i][2][temp]=second_number[temp];
-        lookup[i][2][temp]='\0';
-        for(temp=0;step_number[temp]!='\0';temp++) lookup[i][3][temp]=step_number[temp];
-        lookup[i][3][temp]='\0';
-        fn = charint(first_number);
-        sn = charint(second_number);
-        st = charint(step_number);
+        for(temp=0;vname[temp]!='\0';temp++) lookup[i][temp]=vname[temp];
+        lookup[i][temp]='\0';
         pset_fn[i]=charint(first_number);
         pset_sn[i]=charint(second_number);
         pset_st[i]=charint(step_number);
-        pset_leng[i]=(sn-fn)/st+1;
-        intchar(set_len,fn,sn,st);
-        for(temp=0;set_len[temp]!='\0';temp++) lookup[i][4][temp] = set_len[temp];
-        lookup[i][4][temp]='\0';
+        pset_leng[i]=(pset_sn[i]-pset_fn[i])/pset_st[i]+1;
         i++;
-        if(i>=set_len_dim1){
-          set_len_dim1*=2;
-          printf("HALLO\n");
-          if((lookup2 = (char***) realloc(lookup,set_len_dim1)) == NULL) {
-            printf("Not enought virtual RAM could have been allocated.");
+        if(i>=set_leng){
+          set_leng=set_leng *2;
+          lookup2 = (char **) malloc(sizeof(char*)*set_leng);
+          if(lookup2 == NULL) {
+            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
             return EXIT_FAILURE;
           }
-          else lookup=lookup2;
-          for(temp=0;temp<set_len_dim1;temp++){
-            lookup2[temp]= (char**) realloc(lookup[temp],SET_TAB_DIM2);
-            if(lookup2==NULL){
-            printf("Not enought virtual RAM could have been allocated.");
+          for(k=0;k<set_leng;k++){
+            lookup2[k]= (char*) malloc(sizeof(char)*SET_TAB_DIM3);
+            if(lookup2[k]==NULL){
+              fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+              return EXIT_FAILURE;
+            }
+/*fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);*/
+            if(k<(set_leng/2)) copy_str(&lookup[k][0],&lookup2[k][0]);
+          }
+          for(k=0;k<(set_leng/2);k++) free(lookup[k]);
+          free(lookup);
+          lookup=lookup2;
+          pset_leng2 = malloc(sizeof(size_t)*set_leng);
+          pset_fn2 = malloc(sizeof(size_t)*set_leng);
+          pset_sn2 = malloc(sizeof(size_t)*set_leng);
+          pset_st2 = malloc(sizeof(size_t)*set_leng);
+          if(pset_leng2 == NULL || pset_fn2 == NULL || pset_sn2 == NULL || pset_st2 == NULL){
+            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
             return EXIT_FAILURE;
-            }
-            else lookup[temp]=lookup2[temp];
           }
-          for(temp=0;temp<set_len_dim1;temp++){
-            for(k=0;j<SET_TAB_DIM2;k++){
-              if((lookup2[temp][k]= (char*) realloc(lookup[temp][k],sizeof(char)*SET_TAB_DIM3))==NULL){
-                printf("Not enought virtual RAM could have been allocated.");
-                return EXIT_FAILURE;
-              }
-              else lookup[temp][k]=lookup2[temp][k];
-            }
+          for(k=0;k<(set_leng/2);k++){
+            pset_leng2[k]=pset_leng[k];
+            pset_fn2[k]=pset_fn[k];
+            pset_sn2[k]=pset_sn[k];
+            pset_st2[k]=pset_st[k];
           }
+          free(pset_st);
+          free(pset_sn);
+          free(pset_fn);
+          free(pset_leng);
+          pset_sn=pset_sn2;
+          pset_fn=pset_fn2;
+          pset_leng=pset_leng2;
+          pset_st=pset_st2;
         }
         counter++;
       }
@@ -655,19 +650,15 @@ fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
         else if( more_mv_names == 66){
           for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
           partition_lookup[j][1][temp]='\0';
-          ind = find_set(mod_v_name,lookup,set_len_dim1);
+          ind = find_set(mod_v_name,lookup,set_leng);
           temp_summe =0;
-          for(temp=1;temp<ind[0]+1;temp++)temp_summe+= charint(&(lookup[ind[temp]][4][0]));
+          for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
           free(ind);
           intchar(new_pos,1,current_pos+1,1);
-          for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][4][temp] = new_pos[temp];
-          partition_lookup[j][4][temp]='\0';
           ppart_fn[j]=current_pos+1;
           current_pos += temp_summe;
           ppart_sn[j]=current_pos;
           intchar(new_pos,1,current_pos,1);
-          for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][5][temp] = new_pos[temp];
-          partition_lookup[j][5][temp]='\0';
           j++;
           partition_counter++;
           more_mv_names = grepVName(datei,mod_v_name);
@@ -675,19 +666,15 @@ fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
         else if( more_mv_names == 77) {
           for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
           partition_lookup[j][1][temp]='\0';
-          ind = find_set(mod_v_name,lookup,set_len_dim1);
+          ind = find_set(mod_v_name,lookup,set_leng);
           temp_summe =0;
-          for(temp=1;temp<ind[0]+1;temp++)temp_summe+= charint(&(lookup[ind[temp]][4][0]));
+          for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
           free(ind);
           intchar(new_pos,1,current_pos+1,1);
-          for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][4][temp] = new_pos[temp];
-          partition_lookup[j][4][temp]='\0';
           ppart_fn[j]=current_pos+1;
           current_pos += temp_summe;
           ppart_sn[j]=current_pos;
           intchar(new_pos,1,current_pos,1);
-          for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][5][temp] = new_pos[temp];
-          partition_lookup[j][5][temp]='\0';
           j++;
           partition_counter++;
           grepModName(datei,mod_name, pname);
@@ -702,19 +689,15 @@ fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
       partition_lookup[j][2][temp]='\0';
       for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][3][temp] = pname[temp];
       partition_lookup[j][3][temp]='\0';
-      ind = find_set(mod_v_name,lookup,set_len_dim1);
+      ind = find_set(mod_v_name,lookup,set_leng);
       temp_summe =0;
-      for(temp=1;temp<ind[0]+1;temp++)temp_summe+= charint(&(lookup[ind[temp]][4][0]));
+      for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
       free(ind);
       intchar(new_pos,1,current_pos+1,1);
-      for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][4][temp] = new_pos[temp];
-      partition_lookup[j][4][temp]='\0';
       ppart_fn[j]=current_pos+1;
       current_pos += temp_summe;
       ppart_sn[j]= current_pos;
       intchar(new_pos,1,current_pos,1);
-      for(temp=0;new_pos[temp]!='\0';temp++) partition_lookup[j][5][temp] = new_pos[temp];
-      partition_lookup[j][5][temp]='\0';
       j++;
       partition_counter++;
       charpart_flag = 0;
@@ -728,14 +711,12 @@ fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__);
   }
   k = 0;
   for(i=0;i<counter;i++){
-    for(k=0;k<5;k++){
-      printf("%s ",lookup[i][k]);
-     }
+     printf("%s ",lookup[i]);
      printf("%lu...%lu...%lu...%lu",pset_fn[i],pset_sn[i],pset_st[i],pset_leng[i]);
      printf("\n");
   }
   for(i=0;i<partition_counter;i++){
-    for(k=0;k<6;k++){
+    for(k=0;k<4;k++){
       printf("%s ",partition_lookup[i][k]);
      }
      printf("%lu...%lu",ppart_fn[i],ppart_sn[i]);
