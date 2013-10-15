@@ -7,7 +7,11 @@
 #define PART_TAB_DIM3 200
 #define PART_LENG 10
 struct parsed_part {
-  char*** lookup;
+  char** model_names;
+  char** parameter_names;
+  char** partition_names;
+  char** gene_names;
+  size_t part_len;
   size_t* start;
   size_t* end;
 };
@@ -410,13 +414,13 @@ void grepVName(FILE* datei, char* vname, int* ret){
 return;
 }
 
-struct parsed_part* do_something(FILE* datei,int all){
+struct parsed_part* do_something(FILE* datei,int all,int paras){
   struct parsed_part ret;
   int c;
   int part_var_names_str_len[2];
   int temp_summe;
   int charset_flag;
-  int current_set_len;
+  size_t current_set_len;
   int charpart_flag;
   char vname[100];
   char first_number[100];
@@ -426,7 +430,7 @@ struct parsed_part* do_something(FILE* datei,int all){
   char **ptemp;
   char mod_name[100];
   char mod_v_name[100];
-  char pname[100];
+  char pname[2000];
   char **ppart_name;
   char **ppart_var_name;
   char **ppart_model_name;
@@ -440,7 +444,7 @@ struct parsed_part* do_something(FILE* datei,int all){
   int true_nexus;
   int set_start;
   int end_counter;
-  int partition_counter;
+  size_t partition_counter;
   int name_right;
   int more_numbone;
   int more_numbtwo;
@@ -565,17 +569,10 @@ struct parsed_part* do_something(FILE* datei,int all){
           fprintf(stderr, "Not enought virtual RAM could have been allocated.");
           exit(EXIT_FAILURE);
         }
-        for(k=0;k<current_set_len;k++){
-          ptemp[k]= (char*) malloc(sizeof(char)*(sizeof(lookup[k])/sizeof(char)));
-          if(ptemp[k]==NULL){
-            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-            exit(EXIT_FAILURE);
-          }
-          copy_str(&lookup[k][0],&ptemp[k][0]);
-        }
-        for(k=0;k<current_set_len;k++) free(lookup[k]);
+        for(k=0;k<current_set_len;k++) ptemp[k]= &(lookup[k][0]);
         free(lookup);
         lookup=ptemp;
+        ptemp = NULL;
         pset_leng2 = malloc(sizeof(size_t)*set_leng);
         pset_fn2 = malloc(sizeof(size_t)*set_leng);
         pset_sn2 = malloc(sizeof(size_t)*set_leng);
@@ -623,17 +620,15 @@ struct parsed_part* do_something(FILE* datei,int all){
             fprintf(stderr, "Not enought virtual RAM could have been allocated.");
             exit(EXIT_FAILURE);
           }
-          for(k=0;k<current_set_len;k++){
-            ptemp[k]= (char*) malloc(sizeof(char)*sizeof(lookup[k])/sizeof(char));
-            if(ptemp[k]==NULL){
-              fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-              exit(EXIT_FAILURE);
-            }
-            copy_str(&lookup[k][0],&ptemp[k][0]);
+          ptemp = (char **) malloc(sizeof(char*)*set_leng);
+          if(ptemp == NULL) {
+            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+            exit(EXIT_FAILURE);
           }
-          for(k=0;k<current_set_len;k++) free(lookup[k]);
+          for(k=0;k<current_set_len;k++) ptemp[k]= &(lookup[k][0]);
           free(lookup);
           lookup=ptemp;
+          ptemp = NULL;
           pset_leng2 = malloc(sizeof(size_t)*set_leng);
           pset_fn2 = malloc(sizeof(size_t)*set_leng);
           pset_sn2 = malloc(sizeof(size_t)*set_leng);
@@ -894,32 +889,37 @@ struct parsed_part* do_something(FILE* datei,int all){
   }
   ret.start = ppart_fn;
   ret.end = ppart_sn;
-  ret.lookup = NULL;
+  ret.model_names=ppart_model_name;
+  if(paras)
+    ret.parameter_names=ppart_parameter_name;
+  else
+    ret.parameter_names=NULL;
+  ret.partition_names=ppart_name;
+  ret.gene_names=ppart_var_name;
+  ret.part_len=partition_counter;
   pret=&ret;
-  k = 0;
   for(i=0;i<current_set_len;i++){
      printf("%s ",lookup[i]);
      printf("%lu...%lu...%lu...%lu",pset_fn[i],pset_sn[i],pset_st[i],pset_leng[i]);
      printf("\n");
   }
-  for(i=0;i<partition_counter;i++){
-     printf("...%s....%s...%s...%s...",ppart_name[i],ppart_var_name[i],ppart_model_name[i],ppart_parameter_name[i]);
-     printf("%lu...%lu",ret.start[i],ret.end[i]);
-     printf("\n");
-  }
   return pret;
 }
 int main(int argc, char **argv) {
+  int i=0;
   int all;
+  int paras;
   FILE *datei;
   char *test;
-  struct parsed_part *pstruct;
-  pstruct=NULL;
+  struct parsed_part *p_struct;
+  paras=0;
+  all=0;
+  p_struct=NULL;
   if(argc<2){
     printf("Please set a nexus file as first parameter\n E.g: \" rathian Filename \"\n");
     return 1;
   }
-  test = 0;
+  test = NULL;
   if(argc==3)
     test = argv[2];
   if(test!=NULL){
@@ -928,7 +928,25 @@ int main(int argc, char **argv) {
     else 
       all=0;
   }
+  test = NULL;
+  if(argc==4)
+    test=argv[3];
+  if(test!=NULL){
+    if(test[0]=='p')
+      paras=1;
+    else 
+      paras=0;
+  }
   datei=fopen(argv[1],"rb");
-  pstruct = do_something(datei,all);
+  p_struct = do_something(datei,all,paras);
+  for(i=0;i<p_struct->part_len;i++){
+     if(paras)
+      printf("...%s....%s...%s...%s...",p_struct->partition_names[i],p_struct->gene_names[i],p_struct->model_names[i],p_struct->parameter_names[i]);
+     else
+      printf("...%s....%s...%s...",p_struct->partition_names[i],p_struct->gene_names[i],p_struct->model_names[i]);
+
+     printf("%lu...%lu",p_struct->start[i],p_struct->end[i]);
+     printf("\n");
+  }
   return 0;
 }
