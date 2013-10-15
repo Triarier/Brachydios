@@ -5,8 +5,7 @@
 #define SET_TAB_DIM3 20
 #define PART_TAB_DIM2 4
 #define PART_TAB_DIM3 200
-#define PART_LENG 10
-
+#define PART_LENG 100
 struct parsed_part {
   char*** lookup;
   size_t* start;
@@ -92,12 +91,15 @@ void intchar(char* temp,int fn,int sn, int st){
 /* Greps the name of the variable */
 int grepName(FILE* datei,char* vname){
   int c;
+  int counter;
+  counter =0;
   c = getc(datei);
   while(isspace(c)) c = getc(datei);
   while(1){
     if (c == '='){
       *vname='\0';
-      return 0;
+      counter++;
+      return counter;
     }
     else if (isspace(c)) c = getc(datei);
     else{
@@ -106,11 +108,12 @@ int grepName(FILE* datei,char* vname){
         return -1;
       }
       *vname=c;
+      counter++;
       vname++;
       c = getc(datei);
     }
   }
-  return 2;
+  return -2;
 }
 /* Greps the starting number */
 int grepFirstNumber(FILE* datei,char* vname){
@@ -235,10 +238,12 @@ int grepSteps(FILE* datei, char* vname){
   }
   return 2;
 }
-
-int grepModName(FILE* datei, char* vname, char* pname){
+/* return(VCOUNTER,PCOUNTER) */
+void grepModName(FILE* datei, char* vname, char* pname,int* ret){
   int c;
   int empt;
+  ret[0]=0;
+  ret[1]=0;
   c = getc(datei);
   empt = 1;
   while(isspace(c)) c = getc(datei);
@@ -246,73 +251,93 @@ int grepModName(FILE* datei, char* vname, char* pname){
     if(isspace(c)) c = getc(datei);
     if(c == ';'){
       printf("The character ';' is not allowed in the name of a variable\n");
-      return -1;
+      exit(EXIT_FAILURE);
     }
     if(c == ':'){
       if(empt){
         printf("No Model has been found\n");
-        return -1;
+        exit(EXIT_FAILURE);
       }
       *pname = '{';
       pname++;
+      ret[1]++;
       *pname = '}';
       pname++;
+      ret[1]++;
       *pname = '\0';
+      ret[1]++;
       *vname= '\0';
-      return 0;
+      ret[0]++;
+      return;
     }
     if(c == '+'){
       *pname = '{';
+      ret[1]++;
       pname++;
       *pname = '}';
+      ret[1]++;
       pname++;
       *pname = c;
+      ret[1]++;
       pname++;
       *vname = c;
+      ret[0]++;
       vname++;
       c = getc(datei);
     }
     if(c == '{'){
       *pname= c;
+      ret[1]++;
       pname++;
       while((c = getc(datei)) != '}'){
         if(!(isspace(c))){
           *pname = c;
+          ret[1]++;
           pname++;
         }
       }
       *pname = '}';
+      ret[1]++;
       pname++;
       c = getc(datei);
       while(isspace(c)) c = getc(datei);
       if(c == '+'){
         *pname = '+';
+        ret[1]++;
         pname++;
         *vname = '+';
+        ret[0]++;
         vname++;
         c = getc(datei);
       }
       else {
         *pname = '\0';
+        ret[1]++;
         *vname= '\0';
-        return 0;
+        ret[0]++;
+        return;
       }
     }
     else{
       *vname=c,
+      ret[0]++;
       vname++;
       empt = 0;
       c = getc(datei);
     }
   }
   *pname = '\0';
+  ret[1]++;
   *vname = '\0';
-  return 0;
+  ret[2]++;
+  return;
 }
 
-int grepVName(FILE* datei, char* vname){
+void grepVName(FILE* datei, char* vname, int* ret){
   int c;
   int empt;
+  ret[0]=0;
+  ret[1]=0;
   c = getc(datei);
   empt = 1;
   while(isspace(c)) c = getc(datei);
@@ -320,11 +345,13 @@ int grepVName(FILE* datei, char* vname){
     if(c == ';') {
       if(empt){
         printf("No text after ':' has been found");
-        return -1;
+        ret[0]=-1;
+        exit(EXIT_FAILURE);
       }
       else {
         *vname = '\0';
-        return 0;
+        ret[1]++;
+        return;
       }
     }
     if(isspace(c)) {
@@ -332,52 +359,64 @@ int grepVName(FILE* datei, char* vname){
       if(c == ';'){
         if(empt){
           printf("No text after ':' has been found");
-          return -1;
+          ret[0]=-1;
+          exit(EXIT_FAILURE);
         }
         else{
           *vname = '\0';
-          return 0;
+          ret[1]++;
+          return;
         }
       }
       else if(c == ','){
         if(empt){
           printf("No text after ':' has been found");
-          return -1;
+          ret[0]=-1;
+          exit(EXIT_FAILURE);
         }
         c = getc(datei);
         *vname = '\0';
-        return 77;
+        ret[1]++;
+        ret[0]=77;
+        return;
       }
       else{
         *vname= '\0';
-        return 66;
+        ret[1]++;
+        ret[0]=66;
+        return;
       }
     }
     if(c == ','){
       if(empt){
         printf("No text after ':' has been found");
-        return -1;
+        ret[0]=-1;
+        exit(EXIT_FAILURE);
       }
       c = getc(datei);
       *vname = '\0';
-      return 77;
+      ret[1]++;
+      ret[0]=77;
+      return;
     }
     else{
       *vname=c;
+      ret[1]++;
       vname++;
       empt = 0;
       c = getc(datei);
     }
   }
-return 0;
+return;
 }
 
 struct parsed_part* do_something(FILE* datei,int all){
   struct parsed_part ret;
   int c;
+  int part_var_names_str_len[2];
   int temp_summe;
   int charset_flag;
-  int counter;
+  int current_set_len;
   int charpart_flag;
   char vname[100];
   char first_number[100];
@@ -388,6 +427,10 @@ struct parsed_part* do_something(FILE* datei,int all){
   char mod_v_name[100];
   char pname[100];
   char ***partition_lookup,***partition_lookup2;
+  char **ppart_name;
+  char **ppart_var_name;
+  char **ppart_model_name;
+  char **ppart_parameter_name;
   char new_pos[100];
   int i;
   int j;
@@ -401,7 +444,7 @@ struct parsed_part* do_something(FILE* datei,int all){
   int name_right;
   int more_numbone;
   int more_numbtwo;
-  int more_mv_names;
+  int more_mv_names[2];
   int temp;
   int* ind;
   size_t* pset_fn,*pset_fn2;
@@ -430,13 +473,15 @@ struct parsed_part* do_something(FILE* datei,int all){
       partition_lookup[i][j]= (char *) malloc(sizeof(char)*PART_TAB_DIM3);
     }
   }
+  ppart_name = (char **) malloc(sizeof(char*)*part_leng);
+  ppart_var_name = (char **) malloc(sizeof(char*)*part_leng);
+  ppart_model_name = (char **) malloc(sizeof(char*)*part_leng);
+  ppart_parameter_name = (char **) malloc(sizeof(char*)*part_leng);
   lookup = (char **) malloc(sizeof(char*)*set_leng);
-  for(i=0;i<set_leng;i++)
-    lookup[i]= (char*) malloc(sizeof(char*)*SET_TAB_DIM3);
   current_pos=0;
   temp = 0;
   charset_flag = 0;
-  counter = 0;
+  current_set_len = 0;
   partition_counter = 0;
   charpart_flag = 0;
   end_counter = 0;
@@ -504,11 +549,14 @@ struct parsed_part* do_something(FILE* datei,int all){
       fseek(datei, -1L, SEEK_CUR);
       name_right = grepName(datei,vname);
       if( name_right == -1) exit(EXIT_FAILURE);
+      lookup[i]=(char *) malloc(sizeof(char)*name_right);
+      for(temp=0;vname[temp]!='\0';temp++){
+        lookup[i][temp]=vname[temp];
+      }
+      lookup[i][temp]='\0';
       grepFirstNumber(datei,first_number);
       more_numbone = grepSecondNumber(datei,second_number);
       more_numbtwo = grepSteps(datei,step_number);
-      for(temp=0;vname[temp]!='\0';temp++) lookup[i][temp]=vname[temp];
-      lookup[i][temp]='\0';
       fn = charint(first_number);
       sn = charint(second_number);
       st = charint(step_number);
@@ -517,22 +565,23 @@ struct parsed_part* do_something(FILE* datei,int all){
       pset_st[i]=charint(step_number);
       pset_leng[i]=(sn-fn)/st+1;
       i++;
-      if(i==set_leng){
+      current_set_len++;
+      if(current_set_len==set_leng){
         set_leng=set_leng *2;
         lookup2 = (char **) malloc(sizeof(char*)*set_leng);
         if(lookup2 == NULL) {
           fprintf(stderr, "Not enought virtual RAM could have been allocated.");
           exit(EXIT_FAILURE);
         }
-        for(k=0;k<set_leng;k++){
-          lookup2[k]= (char*) malloc(sizeof(char*)*SET_TAB_DIM3);
+        for(k=0;k<current_set_len;k++){
+          lookup2[k]= (char*) malloc(sizeof(char*)*(sizeof(lookup[k])/sizeof(char)));
           if(lookup2[k]==NULL){
             fprintf(stderr, "Not enought virtual RAM could have been allocated.");
             exit(EXIT_FAILURE);
           }
-          if(k<(set_leng/2)) copy_str(&lookup[k][0],&lookup2[k][0]);
+          copy_str(&lookup[k][0],&lookup2[k][0]);
         }
-        for(k=0;k<(set_leng/2);k++) free(lookup[k]);
+        for(k=0;k<current_set_len;k++) free(lookup[k]);
         free(lookup);
         lookup=lookup2;
         pset_leng2 = malloc(sizeof(size_t)*set_leng);
@@ -543,7 +592,7 @@ struct parsed_part* do_something(FILE* datei,int all){
           fprintf(stderr, "Not enought virtual RAM could have been allocated.");
           exit(EXIT_FAILURE);
         }
-        for(k=0;k<(set_leng/2);k++){
+        for(k=0;k<current_set_len;k++){
           pset_leng2[k]=pset_leng[k];
           pset_fn2[k]=pset_fn[k];
           pset_sn2[k]=pset_sn[k];
@@ -564,29 +613,33 @@ struct parsed_part* do_something(FILE* datei,int all){
         more_numbone = grepSecondNumber(datei,second_number);
         more_numbtwo = grepSteps(datei,step_number);
         temp = 0;
-        for(temp=0;vname[temp]!='\0';temp++) lookup[i][temp]=vname[temp];
+        lookup[i]=(char *) malloc(sizeof(char)*name_right);
+        for(temp=0;vname[temp]!='\0';temp++){
+          lookup[i][temp]=vname[temp];
+        }
         lookup[i][temp]='\0';
         pset_fn[i]=charint(first_number);
         pset_sn[i]=charint(second_number);
         pset_st[i]=charint(step_number);
         pset_leng[i]=(pset_sn[i]-pset_fn[i])/pset_st[i]+1;
         i++;
-        if(i>=set_leng){
+        current_set_len++;
+        if(current_set_len==set_leng){
           set_leng=set_leng *2;
           lookup2 = (char **) malloc(sizeof(char*)*set_leng);
           if(lookup2 == NULL) {
             fprintf(stderr, "Not enought virtual RAM could have been allocated.");
             exit(EXIT_FAILURE);
           }
-          for(k=0;k<set_leng;k++){
-            lookup2[k]= (char*) malloc(sizeof(char)*SET_TAB_DIM3);
+          for(k=0;k<current_set_len;k++){
+            lookup2[k]= (char*) malloc(sizeof(char)*sizeof(lookup[k])/sizeof(char));
             if(lookup2[k]==NULL){
               fprintf(stderr, "Not enought virtual RAM could have been allocated.");
               exit(EXIT_FAILURE);
             }
-            if(k<(set_leng/2)) copy_str(&lookup[k][0],&lookup2[k][0]);
+            copy_str(&lookup[k][0],&lookup2[k][0]);
           }
-          for(k=0;k<(set_leng/2);k++) free(lookup[k]);
+          for(k=0;k<current_set_len;k++) free(lookup[k]);
           free(lookup);
           lookup=lookup2;
           pset_leng2 = malloc(sizeof(size_t)*set_leng);
@@ -597,7 +650,7 @@ struct parsed_part* do_something(FILE* datei,int all){
             fprintf(stderr, "Not enought virtual RAM could have been allocated.");
             exit(EXIT_FAILURE);
           }
-          for(k=0;k<(set_leng/2);k++){
+          for(k=0;k<current_set_len;k++){
             pset_leng2[k]=pset_leng[k];
             pset_fn2[k]=pset_fn[k];
             pset_sn2[k]=pset_sn[k];
@@ -612,9 +665,7 @@ struct parsed_part* do_something(FILE* datei,int all){
           pset_leng=pset_leng2;
           pset_st=pset_st2;
         }
-        counter++;
       }
-      counter++;
       charset_flag = 0;
     }
     else
@@ -642,23 +693,44 @@ struct parsed_part* do_something(FILE* datei,int all){
         vname[1] = 'l';
         vname[2] = 'l';
         vname[3] = '\0';
+        name_right=4;
       }
       if( name_right == -1) exit(EXIT_FAILURE);
-      grepModName(datei,mod_name, pname);
-      more_mv_names = grepVName(datei,mod_v_name);
-      while (more_mv_names != 0){
+      grepModName(datei,mod_name, pname,part_var_names_str_len);
+      grepVName(datei,mod_v_name,more_mv_names);
+      while (more_mv_names[0] != 0){
         fseek(datei, -1L, SEEK_CUR);
         for(temp=0;vname[temp]!='\0';temp++)partition_lookup[j][0][temp] = vname[temp];
         partition_lookup[j][0][temp]='\0';
+
         for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_name[temp];
         partition_lookup[j][2][temp]='\0';
+
+        ppart_name[j]=(char*) malloc(sizeof(char)*name_right);
+        for(temp=0;vname[temp]!='\0';temp++)ppart_name[j][temp] = vname[temp];
+        ppart_name[j][temp]='\0';
+
+        ppart_model_name[j]=(char*) malloc(sizeof(char)*part_var_names_str_len[0]);
+        for(temp=0;mod_name[temp]!='\0';temp++)ppart_model_name[j][temp] = mod_name[temp];
+        ppart_model_name[j][temp]='\0';
+        
+        ppart_parameter_name[j]=(char*) malloc(sizeof(char)*part_var_names_str_len[1]);
+        for(temp=0;pname[temp]!='\0';temp++) ppart_parameter_name[j][temp]= pname[temp];
+        ppart_parameter_name[j][temp]='\0';
+        
         for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][3][temp] = pname[temp];
         partition_lookup[j][3][temp]='\0';
-        if( more_mv_names == -1 ) exit(EXIT_FAILURE);
-        else if( more_mv_names == 66){
+        
+        if( more_mv_names[0] == -1 ) exit(EXIT_FAILURE);
+        else if( more_mv_names[0] == 66){
           for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
           partition_lookup[j][1][temp]='\0';
-          ind = find_set(mod_v_name,lookup,set_leng);
+          
+          ppart_var_name[j]=(char*) malloc(sizeof(char)*more_mv_names[1]);
+          for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
+          ppart_var_name[j][temp]='\0';
+          
+          ind = find_set(mod_v_name,lookup,current_set_len);
           temp_summe =0;
           for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
           free(ind);
@@ -712,12 +784,17 @@ struct parsed_part* do_something(FILE* datei,int all){
             ppart_sn=ppart_sn2;
           }
           partition_counter++;
-          more_mv_names = grepVName(datei,mod_v_name);
+          grepVName(datei,mod_v_name,more_mv_names);
         }
-        else if( more_mv_names == 77) {
+        else if( more_mv_names[0] == 77) {
           for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
           partition_lookup[j][1][temp]='\0';
-          ind = find_set(mod_v_name,lookup,set_leng);
+          
+          ppart_var_name[j]=(char*) malloc(sizeof(char)*more_mv_names[1]);
+          for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
+          ppart_var_name[j][temp]='\0';
+          
+          ind = find_set(mod_v_name,lookup,current_set_len);
           temp_summe =0;
           for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
           free(ind);
@@ -769,9 +846,8 @@ struct parsed_part* do_something(FILE* datei,int all){
             ppart_sn=ppart_sn2;
           }
           partition_counter++;
-          grepModName(datei,mod_name, pname);
-          more_mv_names = grepVName(datei,mod_v_name);
-
+          grepModName(datei,mod_name, pname,part_var_names_str_len);
+          grepVName(datei,mod_v_name,more_mv_names);
         }
       }
       for(temp=0;vname[temp]!='\0';temp++)partition_lookup[j][0][temp] = vname[temp];
@@ -783,7 +859,23 @@ struct parsed_part* do_something(FILE* datei,int all){
       for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][3][temp] = pname[temp];
       partition_lookup[j][3][temp]='\0';
       
-      ind = find_set(mod_v_name,lookup,set_leng);
+      ppart_var_name[j]=(char*) malloc(sizeof(char)*more_mv_names[1]);
+      for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
+      ppart_var_name[j][temp]='\0';
+      
+      ppart_name[j]=(char*) malloc(sizeof(char)*name_right);
+      for(temp=0;vname[temp]!='\0';temp++)ppart_name[j][temp] = vname[temp];
+      ppart_name[j][temp]='\0';
+
+      ppart_model_name[j]=(char*) malloc(sizeof(char)*part_var_names_str_len[0]);
+      for(temp=0;mod_name[temp]!='\0';temp++)ppart_model_name[j][temp] = mod_name[temp];
+      ppart_model_name[j][temp]='\0';
+      
+      ppart_parameter_name[j]=(char*) malloc(sizeof(char)*part_var_names_str_len[1]);
+      for(temp=0;pname[temp]!='\0';temp++) ppart_parameter_name[j][temp]= pname[temp];
+      ppart_parameter_name[j][temp]='\0';
+      
+      ind = find_set(mod_v_name,lookup,current_set_len);
       temp_summe =0;
       for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
       free(ind);
@@ -849,15 +941,13 @@ struct parsed_part* do_something(FILE* datei,int all){
   ret.lookup = partition_lookup;
   pret=&ret;
   k = 0;
-  for(i=0;i<counter;i++){
+  for(i=0;i<current_set_len;i++){
      printf("%s ",lookup[i]);
      printf("%lu...%lu...%lu...%lu",pset_fn[i],pset_sn[i],pset_st[i],pset_leng[i]);
      printf("\n");
   }
   for(i=0;i<partition_counter;i++){
-    for(k=0;k<4;k++){
-      printf("%s ",ret.lookup[i][k]);
-     }
+     printf("...%s....%s...%s...%s...",ppart_name[i],ppart_var_name[i],ppart_model_name[i],ppart_parameter_name[i]);
      printf("%lu...%lu",ret.start[i],ret.end[i]);
      printf("\n");
   }
