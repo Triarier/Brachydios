@@ -5,7 +5,7 @@
 #define SET_TAB_DIM3 20
 #define PART_TAB_DIM2 4
 #define PART_TAB_DIM3 200
-#define PART_LENG 100
+#define PART_LENG 10
 struct parsed_part {
   char*** lookup;
   size_t* start;
@@ -422,11 +422,11 @@ struct parsed_part* do_something(FILE* datei,int all){
   char first_number[100];
   char second_number[100];
   char step_number[100];
-  char **lookup,**lookup2;
+  char **lookup;
+  char **ptemp;
   char mod_name[100];
   char mod_v_name[100];
   char pname[100];
-  char ***partition_lookup,***partition_lookup2;
   char **ppart_name;
   char **ppart_var_name;
   char **ppart_model_name;
@@ -465,14 +465,6 @@ struct parsed_part* do_something(FILE* datei,int all){
   pset_leng = (size_t*) malloc(sizeof(size_t)*set_leng);
   ppart_fn = (size_t*) malloc(sizeof(size_t)*part_leng);
   ppart_sn = (size_t*) malloc(sizeof(size_t)*part_leng);
-  partition_lookup = (char ***) malloc(sizeof(char**)*part_leng);
-  for(i=0;i<part_leng;i++)
-    partition_lookup[i]= (char **) malloc(sizeof(char*)*PART_TAB_DIM2);
-  for(i=0;i<part_leng;i++){
-    for(j=0;j<PART_TAB_DIM2;j++){
-      partition_lookup[i][j]= (char *) malloc(sizeof(char)*PART_TAB_DIM3);
-    }
-  }
   ppart_name = (char **) malloc(sizeof(char*)*part_leng);
   ppart_var_name = (char **) malloc(sizeof(char*)*part_leng);
   ppart_model_name = (char **) malloc(sizeof(char*)*part_leng);
@@ -568,22 +560,22 @@ struct parsed_part* do_something(FILE* datei,int all){
       current_set_len++;
       if(current_set_len==set_leng){
         set_leng=set_leng *2;
-        lookup2 = (char **) malloc(sizeof(char*)*set_leng);
-        if(lookup2 == NULL) {
+        ptemp = (char **) malloc(sizeof(char*)*set_leng);
+        if(ptemp == NULL) {
           fprintf(stderr, "Not enought virtual RAM could have been allocated.");
           exit(EXIT_FAILURE);
         }
         for(k=0;k<current_set_len;k++){
-          lookup2[k]= (char*) malloc(sizeof(char*)*(sizeof(lookup[k])/sizeof(char)));
-          if(lookup2[k]==NULL){
+          ptemp[k]= (char*) malloc(sizeof(char)*(sizeof(lookup[k])/sizeof(char)));
+          if(ptemp[k]==NULL){
             fprintf(stderr, "Not enought virtual RAM could have been allocated.");
             exit(EXIT_FAILURE);
           }
-          copy_str(&lookup[k][0],&lookup2[k][0]);
+          copy_str(&lookup[k][0],&ptemp[k][0]);
         }
         for(k=0;k<current_set_len;k++) free(lookup[k]);
         free(lookup);
-        lookup=lookup2;
+        lookup=ptemp;
         pset_leng2 = malloc(sizeof(size_t)*set_leng);
         pset_fn2 = malloc(sizeof(size_t)*set_leng);
         pset_sn2 = malloc(sizeof(size_t)*set_leng);
@@ -626,22 +618,22 @@ struct parsed_part* do_something(FILE* datei,int all){
         current_set_len++;
         if(current_set_len==set_leng){
           set_leng=set_leng *2;
-          lookup2 = (char **) malloc(sizeof(char*)*set_leng);
-          if(lookup2 == NULL) {
+          ptemp = (char **) malloc(sizeof(char*)*set_leng);
+          if(ptemp == NULL) {
             fprintf(stderr, "Not enought virtual RAM could have been allocated.");
             exit(EXIT_FAILURE);
           }
           for(k=0;k<current_set_len;k++){
-            lookup2[k]= (char*) malloc(sizeof(char)*sizeof(lookup[k])/sizeof(char));
-            if(lookup2[k]==NULL){
+            ptemp[k]= (char*) malloc(sizeof(char)*sizeof(lookup[k])/sizeof(char));
+            if(ptemp[k]==NULL){
               fprintf(stderr, "Not enought virtual RAM could have been allocated.");
               exit(EXIT_FAILURE);
             }
-            copy_str(&lookup[k][0],&lookup2[k][0]);
+            copy_str(&lookup[k][0],&ptemp[k][0]);
           }
           for(k=0;k<current_set_len;k++) free(lookup[k]);
           free(lookup);
-          lookup=lookup2;
+          lookup=ptemp;
           pset_leng2 = malloc(sizeof(size_t)*set_leng);
           pset_fn2 = malloc(sizeof(size_t)*set_leng);
           pset_sn2 = malloc(sizeof(size_t)*set_leng);
@@ -700,11 +692,6 @@ struct parsed_part* do_something(FILE* datei,int all){
       grepVName(datei,mod_v_name,more_mv_names);
       while (more_mv_names[0] != 0){
         fseek(datei, -1L, SEEK_CUR);
-        for(temp=0;vname[temp]!='\0';temp++)partition_lookup[j][0][temp] = vname[temp];
-        partition_lookup[j][0][temp]='\0';
-
-        for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_name[temp];
-        partition_lookup[j][2][temp]='\0';
 
         ppart_name[j]=(char*) malloc(sizeof(char)*name_right);
         for(temp=0;vname[temp]!='\0';temp++)ppart_name[j][temp] = vname[temp];
@@ -718,13 +705,8 @@ struct parsed_part* do_something(FILE* datei,int all){
         for(temp=0;pname[temp]!='\0';temp++) ppart_parameter_name[j][temp]= pname[temp];
         ppart_parameter_name[j][temp]='\0';
         
-        for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][3][temp] = pname[temp];
-        partition_lookup[j][3][temp]='\0';
-        
         if( more_mv_names[0] == -1 ) exit(EXIT_FAILURE);
         else if( more_mv_names[0] == 66){
-          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
-          partition_lookup[j][1][temp]='\0';
           
           ppart_var_name[j]=(char*) malloc(sizeof(char)*more_mv_names[1]);
           for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
@@ -739,41 +721,35 @@ struct parsed_part* do_something(FILE* datei,int all){
           current_pos += temp_summe;
           ppart_sn[j]=current_pos;
           intchar(new_pos,1,current_pos,1);
+          partition_counter++;
           j++;
           if(j==part_leng){
-            part_leng *= 2;  
-            partition_lookup2 = (char***) malloc(sizeof(char**)*part_leng);
-            if(partition_lookup2 == NULL) {
-              fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-              exit(EXIT_FAILURE);
-            }
-            for(k=0;k<part_leng;k++){
-              partition_lookup2[k] = (char**) malloc(sizeof(char*)*PART_TAB_DIM2);
-              if(partition_lookup2[k] == NULL) {
-                fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-                exit(EXIT_FAILURE);
-              }
-            }  
-/* fprintf(stderr, "HALLO (%s:%d)\n", __FILE__, __LINE__); */
-            for(k=0;k<part_leng;k++){
-              for(temp=0;temp<PART_TAB_DIM2;temp++){
-                partition_lookup2[k][temp]= (char*) malloc(sizeof(char)*PART_TAB_DIM3);
-                if(partition_lookup2[k][temp] == NULL) {
-                  fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-                  exit(EXIT_FAILURE);
-                }
-                if(k<(part_leng/2))
-                  copy_str(&(partition_lookup[k][temp][0]),&(partition_lookup2[k][temp][0]));
-              }
-            }
-            for(k=0;k<(part_leng/2);k++){
-              for(temp=0;temp<PART_TAB_DIM2;temp++){
-                free(partition_lookup[k][temp]);
-              }
-            }
-            for(k=0;k<(part_leng/2);k++) free(partition_lookup[k]);
-            free(partition_lookup);
-            partition_lookup = partition_lookup2;
+            part_leng = part_leng*2;
+            
+            ptemp=(char**) malloc(sizeof(char*)*part_leng);
+            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_name[k][0]);
+            free(ppart_name);
+            ppart_name=ptemp;
+            ptemp=NULL;
+            
+            ptemp=(char**) malloc(sizeof(char*)*part_leng);
+            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_var_name[k][0]);
+            free(ppart_var_name);
+            ppart_var_name=ptemp;
+            ptemp=NULL;
+            
+            ptemp=(char**) malloc(sizeof(char*)*part_leng);
+            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_model_name[k][0]);
+            free(ppart_model_name);
+            ppart_model_name=ptemp;
+            ptemp=NULL;
+            
+            ptemp=(char**) malloc(sizeof(char*)*part_leng);
+            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_parameter_name[k][0]);
+            free(ppart_parameter_name);
+            ppart_parameter_name=ptemp;
+            ptemp=NULL;
+            
             ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
             ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
             for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
@@ -783,12 +759,9 @@ struct parsed_part* do_something(FILE* datei,int all){
             ppart_fn=ppart_fn2;
             ppart_sn=ppart_sn2;
           }
-          partition_counter++;
           grepVName(datei,mod_v_name,more_mv_names);
         }
         else if( more_mv_names[0] == 77) {
-          for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
-          partition_lookup[j][1][temp]='\0';
           
           ppart_var_name[j]=(char*) malloc(sizeof(char)*more_mv_names[1]);
           for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
@@ -804,38 +777,34 @@ struct parsed_part* do_something(FILE* datei,int all){
           ppart_sn[j]=current_pos;
           intchar(new_pos,1,current_pos,1);
           j++;
+          partition_counter++;
           if(j==part_leng){
-            part_leng *= 2;  
-            partition_lookup2 = (char***) malloc(sizeof(char**)*part_leng);
-            if(partition_lookup2 == NULL) {
-              fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-              exit(EXIT_FAILURE);
-            }
-            for(k=0;k<part_leng;k++){
-              partition_lookup2[k] = (char**) malloc(sizeof(char*)*PART_TAB_DIM2);
-              if(partition_lookup2[k] == NULL) {
-                fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-                exit(EXIT_FAILURE);
-              }
-            }  
-            for(k=0;k<part_leng;k++){
-              for(temp=0;temp<PART_TAB_DIM2;temp++){
-                partition_lookup2[k][temp]= (char*) malloc(sizeof(char)*PART_TAB_DIM3);
-                if(partition_lookup2[k][temp] == NULL) {
-                  fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-                  exit(EXIT_FAILURE);
-                }
-                if(k<(part_leng/2))copy_str(&(partition_lookup[k][temp][0]),&(partition_lookup2[k][temp][0]));
-              }
-            }
-            for(k=0;k<(part_leng/2);k++){
-              for(temp=0;temp<PART_TAB_DIM2;temp++){
-                free(partition_lookup[k][temp]);
-              }
-            }
-            for(k=0;k<(part_leng/2);k++) free(partition_lookup[k]);
-            free(partition_lookup);
-            partition_lookup = partition_lookup2;
+            part_leng = part_leng *2;
+            
+            ptemp=(char**) malloc(sizeof(char*)*part_leng);
+            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_name[k][0]);
+            free(ppart_name);
+            ppart_name=ptemp;
+            ptemp=NULL;
+            
+            ptemp=(char**) malloc(sizeof(char*)*part_leng);
+            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_var_name[k][0]);
+            free(ppart_var_name);
+            ppart_var_name=ptemp;
+            ptemp=NULL;
+            
+            ptemp=(char**) malloc(sizeof(char*)*part_leng);
+            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_model_name[k][0]);
+            free(ppart_model_name);
+            ppart_model_name=ptemp;
+            ptemp=NULL;
+            
+            ptemp=(char**) malloc(sizeof(char*)*part_leng);
+            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_parameter_name[k][0]);
+            free(ppart_parameter_name);
+            ppart_parameter_name=ptemp;
+            ptemp=NULL;
+                    
             ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
             ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
             for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
@@ -845,19 +814,10 @@ struct parsed_part* do_something(FILE* datei,int all){
             ppart_fn=ppart_fn2;
             ppart_sn=ppart_sn2;
           }
-          partition_counter++;
           grepModName(datei,mod_name, pname,part_var_names_str_len);
           grepVName(datei,mod_v_name,more_mv_names);
         }
       }
-      for(temp=0;vname[temp]!='\0';temp++)partition_lookup[j][0][temp] = vname[temp];
-      partition_lookup[j][0][temp]='\0';
-      for(temp=0;mod_v_name[temp]!='\0';temp++)partition_lookup[j][1][temp] = mod_v_name[temp];
-      partition_lookup[j][1][temp]='\0';
-      for(temp=0;mod_name[temp]!='\0';temp++)partition_lookup[j][2][temp] = mod_name[temp];
-      partition_lookup[j][2][temp]='\0';
-      for(temp=0;pname[temp]!='\0';temp++)partition_lookup[j][3][temp] = pname[temp];
-      partition_lookup[j][3][temp]='\0';
       
       ppart_var_name[j]=(char*) malloc(sizeof(char)*more_mv_names[1]);
       for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
@@ -885,38 +845,35 @@ struct parsed_part* do_something(FILE* datei,int all){
       ppart_sn[j]= current_pos;
       intchar(new_pos,1,current_pos,1);
       j++;
+      partition_counter++;
       if(j==part_leng){
-        part_leng =2;  
-        partition_lookup2 = (char***) malloc(sizeof(char**)*part_leng);
-        if(partition_lookup2 == NULL) {
-          fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-          exit(EXIT_FAILURE);
-        }
-        for(k=0;k<part_leng;k++){
-          partition_lookup2[k] = (char**) malloc(sizeof(char*)*PART_TAB_DIM2);
-          if(partition_lookup2[k] == NULL) {
-            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-            exit(EXIT_FAILURE);
-          }
-        }  
-        for(k=0;k<part_leng;k++){
-          for(temp=0;temp<PART_TAB_DIM2;temp++){
-            partition_lookup2[k][temp]= (char*) malloc(sizeof(char)*PART_TAB_DIM3);
-            if(partition_lookup2[k][temp] == NULL) {
-              fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-              exit(EXIT_FAILURE);
-            }
-            if(k<(part_leng/2))copy_str(&(partition_lookup[k][temp][0]),&(partition_lookup2[k][temp][0]));
-          }
-        }
-        for(k=0;k<(part_leng/2);k++){
-          for(temp=0;temp<PART_TAB_DIM2;temp++){
-            free(partition_lookup[k][temp]);
-          }
-        }
-        for(k=0;k<(part_leng/2);k++) free(partition_lookup[k]);
-        free(partition_lookup);
-        partition_lookup = partition_lookup2;
+        
+        part_leng = part_leng *2;
+
+        ptemp=(char**) malloc(sizeof(char*)*part_leng);
+        for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_name[k][0]);
+        free(ppart_name);
+        ppart_name=ptemp;
+        ptemp=NULL;
+        
+        ptemp=(char**) malloc(sizeof(char*)*part_leng);
+        for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_var_name[k][0]);
+        free(ppart_var_name);
+        ppart_var_name=ptemp;
+        ptemp=NULL;
+        
+        ptemp=(char**) malloc(sizeof(char*)*part_leng);
+        for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_model_name[k][0]);
+        free(ppart_model_name);
+        ppart_model_name=ptemp;
+        ptemp=NULL;
+        
+        ptemp=(char**) malloc(sizeof(char*)*part_leng);
+        for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_parameter_name[k][0]);
+        free(ppart_parameter_name);
+        ppart_parameter_name=ptemp;
+        ptemp=NULL;
+            
         ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
         ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
         for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
@@ -926,7 +883,6 @@ struct parsed_part* do_something(FILE* datei,int all){
         ppart_fn=ppart_fn2;
         ppart_sn=ppart_sn2;
       }
-      partition_counter++;
       charpart_flag = 0;
     }
     else
@@ -938,7 +894,7 @@ struct parsed_part* do_something(FILE* datei,int all){
   }
   ret.start = ppart_fn;
   ret.end = ppart_sn;
-  ret.lookup = partition_lookup;
+  ret.lookup = NULL;
   pret=&ret;
   k = 0;
   for(i=0;i<current_set_len;i++){
