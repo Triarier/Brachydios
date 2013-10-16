@@ -675,7 +675,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
     else if(charpart_flag == 11 && c=='o') charpart_flag++;
     else if(charpart_flag == 12 && c=='n') charpart_flag++;
     else if(charpart_flag == 13 && c==' '){
-      current_pos =0;
+      if(all!=1)current_pos =0;
       temp = 0;
       fseek(datei, -1L, SEEK_CUR);
       name_right = grepName(datei,vname);
