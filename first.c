@@ -563,6 +563,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
       pset_leng[i]=(sn-fn)/st+1;
       i++;
       current_set_len++;
+      /* Extend Array if needed */
       if(current_set_len==set_leng){
         set_leng=set_leng *2;
         ptemp = (char **) malloc(sizeof(char*)*set_leng);
@@ -614,6 +615,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
         pset_leng[i]=(pset_sn[i]-pset_fn[i])/pset_st[i]+1;
         i++;
         current_set_len++;
+        /* Extend Array if needed */
         if(current_set_len==set_leng){
           set_leng=set_leng *2;
           ptemp = (char **) malloc(sizeof(char*)*set_leng);
@@ -658,6 +660,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
     }
     else
       charset_flag = 0;
+    /* Looking for 'charpartition' */
     if(charpart_flag == 0 && c=='c') charpart_flag++;
     else if(charpart_flag == 1 && c=='h') charpart_flag++;
     else if(charpart_flag == 2 && c=='a') charpart_flag++;
@@ -719,6 +722,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
           intchar(new_pos,1,current_pos,1);
           partition_counter++;
           j++;
+          /* Extend Array if needed */
           if(j==part_leng){
             part_leng = part_leng*2;
             
@@ -774,6 +778,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
           intchar(new_pos,1,current_pos,1);
           j++;
           partition_counter++;
+          /* Extend Array if needed */
           if(j==part_leng){
             part_leng = part_leng *2;
             
@@ -814,7 +819,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
           grepVName(datei,mod_v_name,more_mv_names);
         }
       }
-      
+      /* Get new Memory and save char[] */
       ppart_var_name[j]=(char*) malloc(sizeof(char)*more_mv_names[1]);
       for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
       ppart_var_name[j][temp]='\0';
@@ -842,6 +847,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
       intchar(new_pos,1,current_pos,1);
       j++;
       partition_counter++;
+      /* Extend Array if needed */
       if(j==part_leng){
         
         part_leng = part_leng *2;
@@ -969,14 +975,14 @@ int main(int argc, char **argv) {
   datei=fopen(argv[1],"rb");
   p_struct = do_something(datei,all,paras);
   for(i=0;i<p_struct->part_len;i++){
-     if(paras)
+    if(paras)
       printf("...%s....%s...%s...%s...",p_struct->partition_names[i],p_struct->gene_names[i],p_struct->model_names[i],p_struct->parameter_names[i]);
-     else
+    else
       printf("...%s....%s...%s...",p_struct->partition_names[i],p_struct->gene_names[i],p_struct->model_names[i]);
 
-     printf("%lu...%lu",p_struct->start[i],p_struct->end[i]);
-     printf("\n");
+    printf("%lu...%lu",p_struct->start[i],p_struct->end[i]);
+    printf("\n");
   }
   destroy(p_struct);
-  return 0;
+  return EXIT_SUCCESS;
 }
