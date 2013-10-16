@@ -14,6 +14,7 @@ struct parsed_part {
   size_t part_len;
   size_t* start;
   size_t* end;
+  size_t max_part_len;
 };
 /*copy from 1 to 2 */
 void copy_str(char* str1,char* str2){
@@ -892,11 +893,17 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
   ret.model_names=ppart_model_name;
   if(paras)
     ret.parameter_names=ppart_parameter_name;
-  else
+  else{
     ret.parameter_names=NULL;
+    for(i=0;i<partition_counter;i++)
+      free(ppart_parameter_name[i]);
+    free(ppart_parameter_name);
+/* fprintf(stderr,"ERROR %s:%d\n",__FILE__,__LINE__); */
+  }
   ret.partition_names=ppart_name;
   ret.gene_names=ppart_var_name;
   ret.part_len=partition_counter;
+  ret.max_part_len=part_leng;
   pret=&ret;
   for(i=0;i<current_set_len;i++){
      printf("%s ",lookup[i]);
@@ -905,6 +912,21 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
   }
   return pret;
 }
+void destroy(struct parsed_part* temp){
+  int i;
+  for(i =0;i<temp->part_len;i++){
+    if(temp->model_names != NULL) free(temp->model_names[i]);
+    if(temp->parameter_names != NULL) free(temp->parameter_names[i]);
+    if(temp->partition_names != NULL) free(temp->partition_names[i]);
+    if(temp->gene_names != NULL) free(temp->gene_names[i]);
+  }
+  if(temp->parameter_names != NULL) free(temp->parameter_names);
+  if(temp->partition_names != NULL) free(temp->partition_names);
+  if(temp->gene_names != NULL) free(temp->gene_names);
+  if(temp->model_names != NULL) free(temp->model_names);
+  if(temp->start != NULL) free(temp->start);  
+  if(temp->end != NULL) free(temp->end);  
+} 
 int main(int argc, char **argv) {
   int i=0;
   int all;
@@ -948,5 +970,6 @@ int main(int argc, char **argv) {
      printf("%lu...%lu",p_struct->start[i],p_struct->end[i]);
      printf("\n");
   }
+  destroy(p_struct);
   return 0;
 }
