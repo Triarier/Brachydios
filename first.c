@@ -910,6 +910,13 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
      printf("%lu...%lu...%lu...%lu",pset_fn[i],pset_sn[i],pset_st[i],pset_leng[i]);
      printf("\n");
   }
+  for(i=0;i<current_set_len;i++)
+    free(lookup[i]);
+  free(lookup);
+  free(pset_fn);
+  free(pset_sn);
+  free(pset_st);
+  free(pset_leng);
   return pret;
 }
 void destroy(struct parsed_part* temp){
