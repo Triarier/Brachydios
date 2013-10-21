@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
 #define SET_LENG 10
@@ -6,7 +7,8 @@
 #define PART_TAB_DIM2 4
 #define PART_TAB_DIM3 200
 #define PART_LENG 10
-struct parsed_part {
+
+typedef struct {
   char** model_names;
   char** parameter_names;
   char** partition_names;
@@ -15,25 +17,27 @@ struct parsed_part {
   size_t* start;
   size_t* end;
   size_t max_part_len;
-};
-/*copy from 1 to 2 */
-void copy_str(char* str1,char* str2){
-  int i;
-  for(i=0;str1[i]!='\0';i++) 
-    str2[i]=str1[i];
-  str2[i]='\0';
+} partition_t;
+
+
+/****************************/
+int charint(char* temp){
+  int n=0;
+  int i=0;
+  for(i=0;temp[i]!='\0';i++)
+      n=n*10+(temp[i]-'0');
+
+  return n;
 }
+/****************************/
 /* Finde indexes of the right sets. Returning an int*. Int[0] tells the number of found indexes */
 int* find_set(char* set_name,char** look_up,int len){
-  int* ind;
-  int counter;
-  char* help;
-  int cu_len = 4;
   int i,j;
-  int hit;
-  hit = 0;
-  counter =0;
-  ind = calloc(cu_len,sizeof(int));
+  int counter = 0;
+  int hit =0;
+  int cu_len = 4;
+  int* ind = calloc(cu_len,sizeof(int));
+  char* help;
   if(ind == NULL){
     printf("Not enough virtual RAM can be allocated\n");
     exit(EXIT_FAILURE);
@@ -66,33 +70,7 @@ int* find_set(char* set_name,char** look_up,int len){
   return ind;
 }
 
-
-/* Converts a char[] to an int */
-int charint(char* temp){
-  int i;
-  int n;
-  n = 0;
-  for(i=0;temp[i]!='\0';i++){
-
-    n = n * 10+(temp[i]-'0');
-  }
-  return n;
-}
-/* Converts an int to a char[] */
-void intchar(char* temp,int fn,int sn, int st){
-  int n;
-  int i;
-  int copy;
-  i =0;
-  n = (sn-fn)/st+1;
-  for(copy=n;copy!=0;copy/=10) i++;
-  temp[i]='\0';
-  i--;
-  for(;i>=0;i--){
-    temp[i]=(n%10)+('0');
-    n/=10;
-  }
-}
+/****************************/
 /* Greps the name of the variable */
 int grepName(FILE* datei,char* vname){
   int c;
@@ -120,6 +98,8 @@ int grepName(FILE* datei,char* vname){
   }
   return -2;
 }
+
+/****************************/
 /* Greps the starting number */
 int grepFirstNumber(FILE* datei,char* vname){
   int c;
@@ -142,6 +122,8 @@ int grepFirstNumber(FILE* datei,char* vname){
   }
   return 2;
 }
+
+/****************************/
 /* Greps the end number and tells if there are more start/end points */
 int grepSecondNumber(FILE* datei, char* vname){
   int c;
@@ -179,6 +161,8 @@ int grepSecondNumber(FILE* datei, char* vname){
   }
   return 2;
 }
+
+/****************************/
 /* Greps the Stepnumber and tells if there are more start/end point */ 
 int grepSteps(FILE* datei, char* vname){
   int c;
@@ -243,6 +227,8 @@ int grepSteps(FILE* datei, char* vname){
   }
   return 2;
 }
+
+/****************************/
 /* return(VCOUNTER,PCOUNTER) */
 void grepModName(FILE* datei, char* vname, char* pname,int* ret){
   int c;
@@ -338,6 +324,7 @@ void grepModName(FILE* datei, char* vname, char* pname,int* ret){
   return;
 }
 
+/****************************/
 void grepVName(FILE* datei, char* vname, int* ret){
   int c;
   int empt;
@@ -415,42 +402,44 @@ void grepVName(FILE* datei, char* vname, int* ret){
 return;
 }
 
-struct parsed_part* do_something(FILE* datei,int all,int paras){
-  struct parsed_part ret;
-  int c;
+/****************************/
+partition_t parse_partition(FILE* datei,int all,int paras){
+  int i = 0;   /* loop variable */
+  int j = 0;   /* loop variable */
+  int k = 0;   /* loop variable */
+  int c = 0;   /* Read Character */
+  int current_pos = 0; /* Current Position for Start/End */
+  int temp = 0;/* loop variable */
+  int charset_flag = 0;/* Flag to check when charset starts */
+  int charpart_flag = 0;/* Flag to check when charpartition starts */   
+  size_t current_set_len = 0;  /* number of charsets currently read. */
+  size_t partition_counter = 0; /* number of charpartitionlines currently read */
+  size_t set_leng = SET_LENG; /* Maximum number of Charsets */
+  size_t part_leng = PART_LENG; /*Maximum number of Charpartitionlines */
+  int true_nexus = 0;   /* Flag to check if file is a Nexusfile */
+  int set_start = 0;    
+  int end_counter = 0;
+  partition_t ret;   /* Returned struct */
   int part_var_names_str_len[2];
-  int temp_summe;
-  int charset_flag;
-  size_t current_set_len;
-  int charpart_flag;
-  char vname[100];
-  char first_number[100];
-  char second_number[100];
-  char step_number[100];
-  char **lookup;
-  char **ptemp;
-  char mod_name[100];
-  char mod_v_name[100];
-  char pname[2000];
-  char **ppart_name;
-  char **ppart_var_name;
-  char **ppart_model_name;
-  char **ppart_parameter_name;
-  char new_pos[100];
-  int i;
-  int j;
-  int k;
-  int current_pos;
+  int temp_summe; /* Current_pos + temp_sum = new starting point for partition */
+  char vname[100]; /* String for a name */
+  char first_number[100]; /* String for a name */
+  char second_number[100]; /* String for a name */
+  char step_number[100]; /* String for a name */
+  char **lookup; /*Array of Strings for Charsets */
+  char **ptemp; /* Temparray for expanding array */
+  char mod_name[100]; /* String for a name */
+  char mod_v_name[100];/* String for a name */
+  char pname[2000];/* String for a name */
+  char **ppart_name; /* Array of Strings for Charpartitions */
+  char **ppart_var_name; /* Array of Strings for Charpartitions */
+  char **ppart_model_name; /* Array of Strings for Charpartitions */
+  char **ppart_parameter_name; /* Array of Strings for Charpartitions */
   int fn,sn,st; /* Calculation of length */
-  int true_nexus;
-  int set_start;
-  int end_counter;
-  size_t partition_counter;
   int name_right;
   int more_numbone;
   int more_numbtwo;
   int more_mv_names[2];
-  int temp;
   int* ind;
   size_t* pset_fn,*pset_fn2;
   size_t* pset_sn,*pset_sn2;
@@ -458,12 +447,7 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
   size_t* pset_leng,*pset_leng2;
   size_t* ppart_fn,* ppart_fn2;
   size_t* ppart_sn,* ppart_sn2;
-  size_t set_leng;
-  size_t part_leng;
-  struct parsed_part *pret;
-  pret=NULL;
-  set_leng = SET_LENG;
-  part_leng=PART_LENG;
+  /* Allocate arrays */
   pset_fn = (size_t*) malloc(sizeof(size_t)*set_leng);
   pset_sn = (size_t*) malloc(sizeof(size_t)*set_leng);
   pset_st = (size_t*) malloc(sizeof(size_t)*set_leng);
@@ -475,19 +459,10 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
   ppart_model_name = (char **) malloc(sizeof(char*)*part_leng);
   ppart_parameter_name = (char **) malloc(sizeof(char*)*part_leng);
   lookup = (char **) malloc(sizeof(char*)*set_leng);
-  current_pos=0;
-  temp = 0;
-  charset_flag = 0;
-  current_set_len = 0;
-  partition_counter = 0;
-  charpart_flag = 0;
-  end_counter = 0;
-  set_start = 0;
-  i = 0;
-  j = 0;
-  true_nexus = 0;
+  
+  /* Here the fun begins */
   while( (c=getc(datei)) != EOF && true_nexus != 6){
-    while(c==' ' || c == '\t') c = getc(datei);
+    while(isspace(c)) c = getc(datei);
     if (c<91 && c>64) c+= 32;
     if(true_nexus == 0 && c=='#') true_nexus++;
     else if(true_nexus == 1 && c=='n') true_nexus++;
@@ -716,11 +691,9 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
           temp_summe =0;
           for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
           free(ind);
-          intchar(new_pos,1,current_pos+1,1);
           ppart_fn[j]=current_pos+1;
           current_pos += temp_summe;
           ppart_sn[j]=current_pos;
-          intchar(new_pos,1,current_pos,1);
           partition_counter++;
           j++;
           /* Extend Array if needed */
@@ -772,11 +745,9 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
           temp_summe =0;
           for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
           free(ind);
-          intchar(new_pos,1,current_pos+1,1);
           ppart_fn[j]=current_pos+1;
           current_pos += temp_summe;
           ppart_sn[j]=current_pos;
-          intchar(new_pos,1,current_pos,1);
           j++;
           partition_counter++;
           /* Extend Array if needed */
@@ -841,11 +812,9 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
       temp_summe =0;
       for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
       free(ind);
-      intchar(new_pos,1,current_pos+1,1);
       ppart_fn[j]=current_pos+1;
       current_pos += temp_summe;
       ppart_sn[j]= current_pos;
-      intchar(new_pos,1,current_pos,1);
       j++;
       partition_counter++;
       /* Extend Array if needed */
@@ -911,7 +880,6 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
   ret.gene_names=ppart_var_name;
   ret.part_len=partition_counter;
   ret.max_part_len=part_leng;
-  pret=&ret;
   for(i=0;i<current_set_len;i++){
      printf("%s ",lookup[i]);
      printf("%lu...%lu...%lu...%lu",pset_fn[i],pset_sn[i],pset_st[i],pset_leng[i]);
@@ -924,9 +892,11 @@ struct parsed_part* do_something(FILE* datei,int all,int paras){
   free(pset_sn);
   free(pset_st);
   free(pset_leng);
-  return pret;
-}
-void destroy(struct parsed_part* temp){
+  return ret;
+} /* parse_partition */
+
+/****************************/
+void destroy(partition_t* temp){
   int i;
   for(i =0;i<temp->part_len;i++){
     if(temp->model_names != NULL) free(temp->model_names[i]);
@@ -941,49 +911,49 @@ void destroy(struct parsed_part* temp){
   if(temp->start != NULL) free(temp->start);  
   if(temp->end != NULL) free(temp->end);  
 } 
+
+/****************************/
+/****************************/
 int main(int argc, char **argv) {
-  int i=0;
-  int all;
-  int paras;
-  FILE *datei;
-  char *test;
-  struct parsed_part *p_struct;
-  paras=0;
-  all=0;
-  p_struct=NULL;
+  int i=0;      /* counter */
+  int all_flag;      /* flag whether all partition lines shoul be concatenated [OFF] */
+  int paras_flag;    /* flag whether to parse evol. model params [OFF] */
+  FILE *datei = NULL;  /* fp for partition file in NEXUS */
+  partition_t partition_table;   /* combined partition results */
+  paras_flag=0;
+  all_flag=0;
   if(argc<2){
-    printf("Please set a nexus file as first parameter\n E.g: \" rathian Filename \"\n");
     return 1;
   }
-  test = NULL;
-  if(argc==3)
-    test = argv[2];
-  if(test!=NULL){
-    if(test[0]=='a' && test[1]=='l' && test[2]=='l')
-      all=1;
-    else 
-      all=0;
-  }
-  test = NULL;
-  if(argc==4)
-    test=argv[3];
-  if(test!=NULL){
-    if(test[0]=='p')
-      paras=1;
-    else 
-      paras=0;
-  }
-  datei=fopen(argv[1],"rb");
-  p_struct = do_something(datei,all,paras);
-  for(i=0;i<p_struct->part_len;i++){
-    if(paras)
-      printf("...%s....%s...%s...%s...",p_struct->partition_names[i],p_struct->gene_names[i],p_struct->model_names[i],p_struct->parameter_names[i]);
-    else
-      printf("...%s....%s...%s...",p_struct->partition_names[i],p_struct->gene_names[i],p_struct->model_names[i]);
 
-    printf("%lu...%lu",p_struct->start[i],p_struct->end[i]);
+  while ((i = getopt (argc, argv, "apf:")) != -1)
+    switch (i) {
+      case 'a':
+        all_flag = 1;
+        break;
+      case 'p':
+        paras_flag = 1;
+        break;
+      case 'f' :
+        datei=fopen(optarg,"rb");
+        break; 
+      default:
+        break;
+      }
+  if(datei == NULL){
+    printf("Please set a nexus file as a parameter\n E.g: \" %s -f Filename \"\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  partition_table = parse_partition(datei,all_flag,paras_flag);
+  for(i=0;i<partition_table.part_len;i++){
+    if(paras_flag)
+      printf("...%s....%s...%s...%s...",partition_table.partition_names[i],partition_table.gene_names[i],partition_table.model_names[i],partition_table.parameter_names[i]);
+    else
+      printf("...%s....%s...%s...",partition_table.partition_names[i],partition_table.gene_names[i],partition_table.model_names[i]);
+
+    printf("%lu...%lu",partition_table.start[i],partition_table.end[i]);
     printf("\n");
   }
-  destroy(p_struct);
+  destroy(&partition_table);
   return EXIT_SUCCESS;
 }
