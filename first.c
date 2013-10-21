@@ -21,6 +21,21 @@ typedef struct {
 
 
 /****************************/
+void show_help(char* arg){
+  printf("\n\n\n");
+  printf("Set a nexus file as a parameter.................\n");
+  printf("E.g: ' %s Filename '.....................\n", arg);
+  printf("..........Supported Flags.......................\n");
+  printf("-p........Parameter for Evo.Models will be saved\n");
+  printf("..........in partition_t as 'parameter_names'...\n");
+  printf("-a........If you have more than one.............\n");
+  printf("..........charpartition, they will be treated as\n");
+  printf("..........one...................................\n");
+  printf("\n\n\n");
+  exit(EXIT_SUCCESS);
+}
+
+/****************************/
 void expand_part_table(char ***ppart_name,char ***ppart_var_name,char ***ppart_model_name,char ***ppart_parameter_name,size_t partition_counter,size_t part_leng,size_t** ppart_fn,size_t** ppart_sn){
   char **ptemp;
   int k = 0;
@@ -60,6 +75,8 @@ void expand_part_table(char ***ppart_name,char ***ppart_var_name,char ***ppart_m
 
 }
 
+
+/****************************/
 void expand_set_table(size_t set_leng,size_t current_set_len,char ***lookup,size_t **pset_leng,size_t **pset_fn,size_t **pset_sn,size_t **pset_st) {
   
   char **ptemp;
@@ -856,11 +873,11 @@ int main(int argc, char **argv) {
   paras_flag=0;
   all_flag=0;
   if(argc<2){
-    printf("Please set a nexus file as a parameter\n E.g: \" %s -f Filename \"\n", argv[0]);
+    printf("Please set a nexus file as a parameter\n E.g: \" %s Filename \"\n", argv[0]);
     return EXIT_FAILURE;
   }
 
-  while ((i = getopt (argc, argv, "apf:")) != -1)
+  while ((i = getopt (argc, argv, "hapf:")) != -1)
     switch (i) {
       case 'a':
         all_flag = 1;
@@ -868,12 +885,15 @@ int main(int argc, char **argv) {
       case 'p':
         paras_flag = 1;
         break;
+      case 'h':
+        show_help(argv[0]);
+        break;
       default:
         break;
       }
   datei=fopen(argv[optind],"rb");
   if(datei == NULL){
-    printf("Please set a nexus file as a parameter\n E.g: \" %s -f Filename \"\n", argv[0]);
+    printf("Please set a nexus file as a parameter\n E.g: \" %s Filename \"\n", argv[0]);
     return EXIT_FAILURE;
   }
   partition_table = parse_partition(datei,all_flag,paras_flag);
