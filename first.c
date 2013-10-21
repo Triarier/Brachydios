@@ -21,6 +21,100 @@ typedef struct {
 
 
 /****************************/
+void expand_part_table(char ***ppart_name,char ***ppart_var_name,char ***ppart_model_name,char ***ppart_parameter_name,size_t partition_counter,size_t part_leng,size_t** ppart_fn,size_t** ppart_sn){
+  char **ptemp;
+  int k = 0;
+  size_t *ppart_int_temp;
+  ptemp=(char**) malloc(sizeof(char*)*part_leng);
+  for(k=0;k<partition_counter;k++) ptemp[k]= &((*ppart_name)[k][0]);
+  free((*ppart_name));
+  *ppart_name=ptemp;
+  ptemp=NULL;
+  ptemp=(char**) malloc(sizeof(char*)*part_leng);
+  for(k=0;k<partition_counter;k++) ptemp[k]= &((*ppart_var_name)[k][0]);
+  free((*ppart_var_name));
+  *ppart_var_name=ptemp;
+  ptemp=NULL;
+  
+  ptemp=(char**) malloc(sizeof(char*)*part_leng);
+  for(k=0;k<partition_counter;k++) ptemp[k]= &((*ppart_model_name)[k][0]);
+  free((*ppart_model_name));
+  *ppart_model_name=ptemp;
+  ptemp=NULL;
+  
+  ptemp=(char**) malloc(sizeof(char*)*part_leng);
+  for(k=0;k<partition_counter;k++) ptemp[k]= &((*ppart_parameter_name)[k][0]);
+  free((*ppart_parameter_name));
+  *ppart_parameter_name=ptemp;
+  ptemp=NULL;
+  
+  ppart_int_temp =(size_t*) malloc(sizeof(size_t)*part_leng);
+  for(k=0;k<(part_leng/2);k++) ppart_int_temp[k]=((*ppart_fn)[k]);
+  free((*ppart_fn));
+  *ppart_fn=ppart_int_temp;
+  ppart_int_temp =NULL;
+  ppart_int_temp =(size_t*) malloc(sizeof(size_t)*part_leng);
+  for(k=0;k<(part_leng/2);k++) ppart_int_temp[k]=((*ppart_sn)[k]);
+  free((*ppart_sn));
+  *ppart_sn=ppart_int_temp;
+
+}
+
+void expand_set_table(size_t set_leng,size_t current_set_len,char ***lookup,size_t **pset_leng,size_t **pset_fn,size_t **pset_sn,size_t **pset_st) {
+  
+  char **ptemp;
+  size_t *int_temp;
+  int k = 0;
+  
+  ptemp = (char **) malloc(sizeof(char*)*set_leng);
+  if(ptemp == NULL) {
+    fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+    exit(EXIT_FAILURE);
+  }
+  for(k=0;k<current_set_len;k++) ptemp[k]= &((*lookup)[k][0]);
+  free(*lookup);
+  *lookup=ptemp;
+  ptemp = NULL;
+  int_temp = malloc(sizeof(size_t)*set_leng);
+  if(int_temp == NULL){
+    fprintf(stderr, "Not enought virtual RAM could have been allocated.");
+    exit(EXIT_FAILURE);
+  }
+  for(k=0;k<current_set_len;k++){
+    int_temp[k]=(*pset_leng)[k];
+  }
+  free(*pset_leng);
+  *pset_leng=int_temp;
+  int_temp = NULL;
+  
+  int_temp = malloc(sizeof(size_t)*set_leng);
+  for(k=0;k<current_set_len;k++){
+    int_temp[k]=(*pset_fn)[k];
+  }
+  free(*pset_fn);
+  *pset_fn=int_temp;
+  int_temp = NULL;
+  
+  int_temp = malloc(sizeof(size_t)*set_leng);
+  for(k=0;k<current_set_len;k++){
+    int_temp[k]=(*pset_sn)[k];
+  }
+  free(*pset_sn);
+  *pset_sn=int_temp;
+  int_temp = NULL;
+  
+  int_temp = malloc(sizeof(size_t)*set_leng);
+  for(k=0;k<current_set_len;k++){
+    int_temp[k]=(*pset_st)[k];
+  }
+  free(*pset_st);
+  *pset_st=int_temp;
+  int_temp = NULL;
+
+}
+
+
+/****************************/
 int charint(char* temp){
   int n=0;
   int i=0;
@@ -406,7 +500,6 @@ return;
 partition_t parse_partition(FILE* datei,int all,int paras){
   int i = 0;   /* loop variable */
   int j = 0;   /* loop variable */
-  int k = 0;   /* loop variable */
   int c = 0;   /* Read Character */
   int current_pos = 0; /* Current Position for Start/End */
   int temp = 0;/* loop variable */
@@ -427,7 +520,6 @@ partition_t parse_partition(FILE* datei,int all,int paras){
   char second_number[100]; /* String for a name */
   char step_number[100]; /* String for a name */
   char **lookup; /*Array of Strings for Charsets */
-  char **ptemp; /* Temparray for expanding array */
   char mod_name[100]; /* String for a name */
   char mod_v_name[100];/* String for a name */
   char pname[2000];/* String for a name */
@@ -441,12 +533,12 @@ partition_t parse_partition(FILE* datei,int all,int paras){
   int more_numbtwo;
   int more_mv_names[2];
   int* ind;
-  size_t* pset_fn,*pset_fn2;
-  size_t* pset_sn,*pset_sn2;
-  size_t* pset_st,*pset_st2;
-  size_t* pset_leng,*pset_leng2;
-  size_t* ppart_fn,* ppart_fn2;
-  size_t* ppart_sn,* ppart_sn2;
+  size_t* pset_fn;
+  size_t* pset_sn;
+  size_t* pset_st;
+  size_t* pset_leng;
+  size_t* ppart_fn;
+  size_t* ppart_sn;
   /* Allocate arrays */
   pset_fn = (size_t*) malloc(sizeof(size_t)*set_leng);
   pset_sn = (size_t*) malloc(sizeof(size_t)*set_leng);
@@ -527,51 +619,21 @@ partition_t parse_partition(FILE* datei,int all,int paras){
       }
       lookup[i][temp]='\0';
       grepFirstNumber(datei,first_number);
-      more_numbone = grepSecondNumber(datei,second_number);
-      more_numbtwo = grepSteps(datei,step_number);
       fn = charint(first_number);
-      sn = charint(second_number);
-      st = charint(step_number);
       pset_fn[i]=charint(first_number);
-      pset_sn[i]=charint(second_number);
-      pset_st[i]=charint(step_number);
+      more_numbone = grepSecondNumber(datei,first_number);
+      pset_sn[i]=charint(first_number);
+      sn = charint(first_number);
+      more_numbtwo = grepSteps(datei,first_number);
+      st = charint(first_number);
+      pset_st[i]=charint(first_number);
       pset_leng[i]=(sn-fn)/st+1;
       i++;
       current_set_len++;
       /* Extend Array if needed */
       if(current_set_len==set_leng){
         set_leng=set_leng *2;
-        ptemp = (char **) malloc(sizeof(char*)*set_leng);
-        if(ptemp == NULL) {
-          fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-          exit(EXIT_FAILURE);
-        }
-        for(k=0;k<current_set_len;k++) ptemp[k]= &(lookup[k][0]);
-        free(lookup);
-        lookup=ptemp;
-        ptemp = NULL;
-        pset_leng2 = malloc(sizeof(size_t)*set_leng);
-        pset_fn2 = malloc(sizeof(size_t)*set_leng);
-        pset_sn2 = malloc(sizeof(size_t)*set_leng);
-        pset_st2 = malloc(sizeof(size_t)*set_leng);
-        if(pset_leng2 == NULL || pset_fn2 == NULL || pset_sn2 == NULL || pset_st2 == NULL){
-          fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-          exit(EXIT_FAILURE);
-        }
-        for(k=0;k<current_set_len;k++){
-          pset_leng2[k]=pset_leng[k];
-          pset_fn2[k]=pset_fn[k];
-          pset_sn2[k]=pset_sn[k];
-          pset_st2[k]=pset_st[k];
-        }
-        free(pset_st);
-        free(pset_sn);
-        free(pset_fn);
-        free(pset_leng);
-        pset_sn=pset_sn2;
-        pset_fn=pset_fn2;
-        pset_leng=pset_leng2;
-        pset_st=pset_st2;
+        expand_set_table( set_leng, current_set_len, &lookup, &pset_leng, &pset_fn, &pset_sn, &pset_st);
       }
       while(more_numbone == 77 || more_numbtwo == 77){
         fseek(datei, -1L, SEEK_CUR);
@@ -593,42 +655,7 @@ partition_t parse_partition(FILE* datei,int all,int paras){
         /* Extend Array if needed */
         if(current_set_len==set_leng){
           set_leng=set_leng *2;
-          ptemp = (char **) malloc(sizeof(char*)*set_leng);
-          if(ptemp == NULL) {
-            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-            exit(EXIT_FAILURE);
-          }
-          ptemp = (char **) malloc(sizeof(char*)*set_leng);
-          if(ptemp == NULL) {
-            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-            exit(EXIT_FAILURE);
-          }
-          for(k=0;k<current_set_len;k++) ptemp[k]= &(lookup[k][0]);
-          free(lookup);
-          lookup=ptemp;
-          ptemp = NULL;
-          pset_leng2 = malloc(sizeof(size_t)*set_leng);
-          pset_fn2 = malloc(sizeof(size_t)*set_leng);
-          pset_sn2 = malloc(sizeof(size_t)*set_leng);
-          pset_st2 = malloc(sizeof(size_t)*set_leng);
-          if(pset_leng2 == NULL || pset_fn2 == NULL || pset_sn2 == NULL || pset_st2 == NULL){
-            fprintf(stderr, "Not enought virtual RAM could have been allocated.");
-            exit(EXIT_FAILURE);
-          }
-          for(k=0;k<current_set_len;k++){
-            pset_leng2[k]=pset_leng[k];
-            pset_fn2[k]=pset_fn[k];
-            pset_sn2[k]=pset_sn[k];
-            pset_st2[k]=pset_st[k];
-          }
-          free(pset_st);
-          free(pset_sn);
-          free(pset_fn);
-          free(pset_leng);
-          pset_sn=pset_sn2;
-          pset_fn=pset_fn2;
-          pset_leng=pset_leng2;
-          pset_st=pset_st2;
+          expand_set_table( set_leng, current_set_len, &lookup, &pset_leng, &pset_fn, &pset_sn, &pset_st);
         }
       }
       charset_flag = 0;
@@ -699,39 +726,8 @@ partition_t parse_partition(FILE* datei,int all,int paras){
           /* Extend Array if needed */
           if(j==part_leng){
             part_leng = part_leng*2;
-            
-            ptemp=(char**) malloc(sizeof(char*)*part_leng);
-            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_name[k][0]);
-            free(ppart_name);
-            ppart_name=ptemp;
-            ptemp=NULL;
-            
-            ptemp=(char**) malloc(sizeof(char*)*part_leng);
-            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_var_name[k][0]);
-            free(ppart_var_name);
-            ppart_var_name=ptemp;
-            ptemp=NULL;
-            
-            ptemp=(char**) malloc(sizeof(char*)*part_leng);
-            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_model_name[k][0]);
-            free(ppart_model_name);
-            ppart_model_name=ptemp;
-            ptemp=NULL;
-            
-            ptemp=(char**) malloc(sizeof(char*)*part_leng);
-            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_parameter_name[k][0]);
-            free(ppart_parameter_name);
-            ppart_parameter_name=ptemp;
-            ptemp=NULL;
-            
-            ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
-            ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
-            for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
-            for(k=0;k<(part_leng/2);k++) ppart_sn2[k]=ppart_sn[k];
-            free(ppart_fn);
-            free(ppart_sn);
-            ppart_fn=ppart_fn2;
-            ppart_sn=ppart_sn2;
+fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__);
+            expand_part_table(&ppart_name,&ppart_var_name,&ppart_model_name,&ppart_parameter_name,partition_counter,part_leng,&ppart_fn,&ppart_sn);
           }
           grepVName(datei,mod_v_name,more_mv_names);
         }
@@ -753,39 +749,8 @@ partition_t parse_partition(FILE* datei,int all,int paras){
           /* Extend Array if needed */
           if(j==part_leng){
             part_leng = part_leng *2;
-            
-            ptemp=(char**) malloc(sizeof(char*)*part_leng);
-            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_name[k][0]);
-            free(ppart_name);
-            ppart_name=ptemp;
-            ptemp=NULL;
-            
-            ptemp=(char**) malloc(sizeof(char*)*part_leng);
-            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_var_name[k][0]);
-            free(ppart_var_name);
-            ppart_var_name=ptemp;
-            ptemp=NULL;
-            
-            ptemp=(char**) malloc(sizeof(char*)*part_leng);
-            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_model_name[k][0]);
-            free(ppart_model_name);
-            ppart_model_name=ptemp;
-            ptemp=NULL;
-            
-            ptemp=(char**) malloc(sizeof(char*)*part_leng);
-            for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_parameter_name[k][0]);
-            free(ppart_parameter_name);
-            ppart_parameter_name=ptemp;
-            ptemp=NULL;
-                    
-            ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
-            ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
-            for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
-            for(k=0;k<(part_leng/2);k++) ppart_sn2[k]=ppart_sn[k];
-            free(ppart_fn);
-            free(ppart_sn);
-            ppart_fn=ppart_fn2;
-            ppart_sn=ppart_sn2;
+fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__);
+            expand_part_table(&ppart_name,&ppart_var_name,&ppart_model_name,&ppart_parameter_name,partition_counter,part_leng,&ppart_fn,&ppart_sn);
           }
           grepModName(datei,mod_name, pname,part_var_names_str_len);
           grepVName(datei,mod_v_name,more_mv_names);
@@ -819,41 +784,9 @@ partition_t parse_partition(FILE* datei,int all,int paras){
       partition_counter++;
       /* Extend Array if needed */
       if(j==part_leng){
-        
         part_leng = part_leng *2;
-
-        ptemp=(char**) malloc(sizeof(char*)*part_leng);
-        for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_name[k][0]);
-        free(ppart_name);
-        ppart_name=ptemp;
-        ptemp=NULL;
-        
-        ptemp=(char**) malloc(sizeof(char*)*part_leng);
-        for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_var_name[k][0]);
-        free(ppart_var_name);
-        ppart_var_name=ptemp;
-        ptemp=NULL;
-        
-        ptemp=(char**) malloc(sizeof(char*)*part_leng);
-        for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_model_name[k][0]);
-        free(ppart_model_name);
-        ppart_model_name=ptemp;
-        ptemp=NULL;
-        
-        ptemp=(char**) malloc(sizeof(char*)*part_leng);
-        for(k=0;k<partition_counter;k++) ptemp[k]= &(ppart_parameter_name[k][0]);
-        free(ppart_parameter_name);
-        ppart_parameter_name=ptemp;
-        ptemp=NULL;
-            
-        ppart_fn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
-        ppart_sn2 =(size_t*) malloc(sizeof(size_t)*part_leng);
-        for(k=0;k<(part_leng/2);k++) ppart_fn2[k]=ppart_fn[k];
-        for(k=0;k<(part_leng/2);k++) ppart_sn2[k]=ppart_sn[k];
-        free(ppart_fn);
-        free(ppart_sn);
-        ppart_fn=ppart_fn2;
-        ppart_sn=ppart_sn2;
+fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__);
+        expand_part_table(&ppart_name,&ppart_var_name,&ppart_model_name,&ppart_parameter_name,partition_counter,part_leng,&ppart_fn,&ppart_sn);
       }
       charpart_flag = 0;
     }
@@ -923,7 +856,8 @@ int main(int argc, char **argv) {
   paras_flag=0;
   all_flag=0;
   if(argc<2){
-    return 1;
+    printf("Please set a nexus file as a parameter\n E.g: \" %s -f Filename \"\n", argv[0]);
+    return EXIT_FAILURE;
   }
 
   while ((i = getopt (argc, argv, "apf:")) != -1)
@@ -934,12 +868,10 @@ int main(int argc, char **argv) {
       case 'p':
         paras_flag = 1;
         break;
-      case 'f' :
-        datei=fopen(optarg,"rb");
-        break; 
       default:
         break;
       }
+  datei=fopen(argv[optind],"rb");
   if(datei == NULL){
     printf("Please set a nexus file as a parameter\n E.g: \" %s -f Filename \"\n", argv[0]);
     return EXIT_FAILURE;
