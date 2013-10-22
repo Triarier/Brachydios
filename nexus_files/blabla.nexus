@@ -1,0 +1,23 @@
+#nexus
+begin sets;
+charset gene409961g = 1-125 ;
+charset gene409962g = 126-658 ;
+charset gene409963g = 659-849 ;
+charset gene409964g = 850-1185 ;
+charset gene409965g = 1186-2118 ;
+charset gene409966g = 2119-2898 ;
+charset gene409967g = 2899-3381 ;
+charset gene409968g = 3382-3624 ;
+charset gene409969g = 3625-3744 ;
+charset gene409970g = 3745-3953 ;
+charset gene409971g = 3954-4743 ;
+charset gene409972g = 4744-4990 ;
+charset gene409973g = 4991-5445 ;
+charset gene409974g = 5446-7010 ;
+charset gene409975g = 7011-7197 ;
+charset gene409976g = 7198-7365 ;
+charset gene409977g = 7366-7606 ;
+charset gene409978g = 7607-8057 ;
+charset gene409979g = 8058-8227 ;
+charset gene409980g = 228- 
+end;
