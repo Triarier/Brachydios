@@ -53,7 +53,7 @@ else
     time ./rathalos -a $prog 1> $direct/result_l.log
     echo
     echo TIME CHAR
-    time ./works/rathian -a $prog 1> $direct/result_c.log
+    time ./rathian -a $prog 1> $direct/result_c.log
   else
     echo
     echo Parameter: ap
