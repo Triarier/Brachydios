@@ -1,0 +1,66 @@
+#nexus
+begin sets;
+charset gene411435g = 1 - 393;
+charset gene411515g = 394 - 495;
+charset gene411604g = 496 - 641;
+charset gene410178g = 642 - 786;
+charset gene410125g = 787 - 1229;
+charset gene410807g = 1230 - 1902;
+charset gene411091g = 1903 - 1982;
+charset gene409979g = 1983 - 2152;
+charset gene410016g = 2153 - 2272;
+charset gene410274g = 2273 - 3072;
+charset gene410300g = 3073 - 3202;
+charset gene410333g = 3203 - 3325;
+charset gene410469g = 3326 - 3539;
+charset gene410908g = 3540 - 3724;
+charset gene410951g = 3725 - 3917;
+charset gene411288g = 3918 - 4056;
+charset gene411410g = 4057 - 4239;
+charset gene410279g = 4240 - 4366;
+charset gene410080g = 4367 - 4455;
+charset gene410203g = 4456 - 4801;
+charset gene410857g = 4802 - 4916;
+charset gene410963g = 4917 - 5021;
+charset gene411207g = 5022 - 5346;
+charset gene411672g = 5347 - 6399;
+charset gene411391g = 6400 - 6753;
+charset gene410525g = 6754 - 7248;
+charset gene411562g = 7249 - 7569;
+charset gene410336g = 7570 - 7993;
+charset gene410001g = 7994 - 8165;
+charset gene410710g = 8166 - 8481;
+charset gene411424g = 8482 - 8546;
+charpartition mine =
+JTT+G: gene411435g ,
+LG+G: gene411515g ,
+WAG+I+G: gene411604g ,
+LG+I+G: gene410178g ,
+PMB+G: gene410125g ,
+VT+G: gene410807g ,
+LG+G: gene411091g ,
+LG+G: gene409979g ,
+LG+G: gene410016g ,
+LG+G: gene410274g ,
+LG+G: gene410300g ,
+LG+G: gene410333g ,
+LG+I+G: gene410469g ,
+LG+G: gene410908g ,
+LG+I+G: gene410951g ,
+LG+G: gene411288g ,
+LG+I+G: gene411410g ,
+JTT+G: gene410279g ,
+LG+I+G: gene410080g ,
+LG+G: gene410203g ,
+LG+G: gene410857g ,
+WAG+G: gene410963g ,
+LG+I+G: gene411207g ,
+LG+I+G: gene411672g ,
+LG+I+G: gene411391g ,
+LG+I+G: gene410525g ,
+LG+G: gene411562g ,
+LG+G: gene410336g ,
+LG+G: gene410001g ,
+JTT+G: gene410710g ,
+LG+G: gene411424g ;
+end;

@@ -8,7 +8,6 @@
 #define PART_TAB_DIM3 200
 #define PART_LENG 10
 #define STR_LEN 10
-
 typedef struct {
   char** model_names;
   char** parameter_names;
@@ -18,7 +17,6 @@ typedef struct {
   size_t* start;
   size_t* end;
   size_t max_part_len;
-   
 } partition_t;
 
 
@@ -38,22 +36,6 @@ void show_help(char* arg){
 }
 
 /****************************/
-char* intchar(int n){
-  int i= 0;
-  int cop_n = n;
-  int len=1;
-  char * temp;
-  for(;cop_n!=0;cop_n/=10) len++;
-  temp = (char*) malloc(sizeof(char)*len);
-  temp[len-1]='\0';
-  for(i=(len-2);i>=0;i--) {
-    cop_n=n%10;
-    n/=10;
-    temp[i]=(cop_n+'0');
-  }
-  return temp;
-}
-/****************************/
 int mygetc(char* str,int str_len,FILE* file,int* c_read){
   if(str[*c_read]==EOF) exit(EXIT_SUCCESS);
   if(str[(*c_read)+1]=='\0'){
@@ -68,43 +50,6 @@ int mygetc(char* str,int str_len,FILE* file,int* c_read){
 /* fprintf(stderr,"c_valie: %d str[%d] = %c\n",str[*c_read],*c_read,str[*c_read]); */
   return str[*c_read];
 }
-/****************************/
-void protoss_build_nexus(char* f_name,partition_t* nexus){
-  FILE* fp = fopen(f_name,"w");
-  int i;
-  char* temp;
-  char set_temp[] = {"charset "};
-  fputs("#nexus\n",fp);
-  fputs("begin sets;\n",fp);
-  for(i=0;i<nexus->part_len;i++){
-    fputs(set_temp,fp);
-    fputs(nexus->gene_names[i],fp);
-    fputs(" = ",fp);
-    temp=intchar(nexus->start[i]);
-    fputs(temp,fp);
-    free(temp);
-    fputs(" - ",fp);
-    temp=intchar(nexus->end[i]);
-    fputs(temp,fp);
-    free(temp);
-    fputs(";\n",fp);
-  }
-  fputs("\ncharpartition ",fp);
-  fputs(nexus->partition_names[0],fp);
-  fputs(" =\n",fp);
-  for(i=0;i<nexus->part_len;i++){
-    fputs(nexus->model_names[i],fp);
-    fputs(": ",fp);
-    fputs(nexus->gene_names[i],fp);
-    if(i==(nexus->part_len-1))
-      fputs(" ;\n",fp);
-    else
-      fputs(" ,\n",fp);
-  }
-  fputs("end;",fp);
-  fclose(fp);
-}
-
 /****************************/
 void expand_part_table(char ***ppart_name,char ***ppart_var_name,char ***ppart_model_name,char ***ppart_parameter_name,size_t partition_counter,size_t part_leng,size_t** ppart_fn,size_t** ppart_sn){
   char **ptemp;
@@ -990,7 +935,6 @@ int main(int argc, char **argv) {
     printf("%lu...%lu",partition_table.start[i],partition_table.end[i]);
     printf("\n");
   }
-  protoss_build_nexus("hugo",&partition_table);
   destroy(&partition_table);
   return EXIT_SUCCESS;
 }

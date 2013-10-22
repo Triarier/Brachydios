@@ -766,7 +766,7 @@ partition_t parse_partition(FILE* datei,int all,int paras){
           /* Extend Array if needed */
           if(j==part_leng){
             part_leng = part_leng *2;
-  /* fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__); */
+   /* fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__); */
               expand_part_table(&ppart_name,&ppart_var_name,&ppart_model_name,&ppart_parameter_name,partition_counter,part_leng,&ppart_fn,&ppart_sn);
             }
             grepModName(datei,mod_name, pname,part_var_names_str_len);

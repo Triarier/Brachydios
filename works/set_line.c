@@ -7,8 +7,7 @@
 #define PART_TAB_DIM2 4
 #define PART_TAB_DIM3 200
 #define PART_LENG 10
-#define STR_LEN 10
-
+#define STR_LEN 20
 typedef struct {
   char** model_names;
   char** parameter_names;
@@ -18,7 +17,6 @@ typedef struct {
   size_t* start;
   size_t* end;
   size_t max_part_len;
-   
 } partition_t;
 
 
@@ -38,26 +36,11 @@ void show_help(char* arg){
 }
 
 /****************************/
-char* intchar(int n){
-  int i= 0;
-  int cop_n = n;
-  int len=1;
-  char * temp;
-  for(;cop_n!=0;cop_n/=10) len++;
-  temp = (char*) malloc(sizeof(char)*len);
-  temp[len-1]='\0';
-  for(i=(len-2);i>=0;i--) {
-    cop_n=n%10;
-    n/=10;
-    temp[i]=(cop_n+'0');
-  }
-  return temp;
-}
-/****************************/
 int mygetc(char* str,int str_len,FILE* file,int* c_read){
   if(str[*c_read]==EOF) exit(EXIT_SUCCESS);
   if(str[(*c_read)+1]=='\0'){
-    *c_read =0;
+    if(*c_read==(str_len-2))  *c_read= 1 ;
+    else *c_read =0;
     str = fgets(str,str_len,file);
     while(str[0]=='\n')
       str = fgets(str,str_len,file);
@@ -65,46 +48,9 @@ int mygetc(char* str,int str_len,FILE* file,int* c_read){
   }
   else 
     (*c_read)++;
-/* fprintf(stderr,"c_valie: %d str[%d] = %c\n",str[*c_read],*c_read,str[*c_read]); */
+fprintf(stderr,"str[%d] = %c\n",*c_read,str[*c_read]);
   return str[*c_read];
 }
-/****************************/
-void protoss_build_nexus(char* f_name,partition_t* nexus){
-  FILE* fp = fopen(f_name,"w");
-  int i;
-  char* temp;
-  char set_temp[] = {"charset "};
-  fputs("#nexus\n",fp);
-  fputs("begin sets;\n",fp);
-  for(i=0;i<nexus->part_len;i++){
-    fputs(set_temp,fp);
-    fputs(nexus->gene_names[i],fp);
-    fputs(" = ",fp);
-    temp=intchar(nexus->start[i]);
-    fputs(temp,fp);
-    free(temp);
-    fputs(" - ",fp);
-    temp=intchar(nexus->end[i]);
-    fputs(temp,fp);
-    free(temp);
-    fputs(";\n",fp);
-  }
-  fputs("\ncharpartition ",fp);
-  fputs(nexus->partition_names[0],fp);
-  fputs(" =\n",fp);
-  for(i=0;i<nexus->part_len;i++){
-    fputs(nexus->model_names[i],fp);
-    fputs(": ",fp);
-    fputs(nexus->gene_names[i],fp);
-    if(i==(nexus->part_len-1))
-      fputs(" ;\n",fp);
-    else
-      fputs(" ,\n",fp);
-  }
-  fputs("end;",fp);
-  fclose(fp);
-}
-
 /****************************/
 void expand_part_table(char ***ppart_name,char ***ppart_var_name,char ***ppart_model_name,char ***ppart_parameter_name,size_t partition_counter,size_t part_leng,size_t** ppart_fn,size_t** ppart_sn){
   char **ptemp;
@@ -256,7 +202,7 @@ int* find_set(char* set_name,char** look_up,int len){
 int grepName(int c,FILE* datei,char* vname,char* str,int str_len,int* c_read){
   int counter;
   counter =0;
-/*  c = mygetc(str,str_len,datei,c_read); */
+  c = mygetc(str,str_len,datei,c_read);
   while(isspace(c)) c = mygetc(str,str_len,datei,c_read);
   while(1){
     if (c == '='){
@@ -281,12 +227,8 @@ int grepName(int c,FILE* datei,char* vname,char* str,int str_len,int* c_read){
 
 /****************************/
 /* Greps the starting number */
-int grepFirstNumber(int* ret,int c,FILE* datei,char* vname,char* str,int str_len,int* c_read){
-  if(ret[0]!=77)  c = mygetc(str,str_len,datei,c_read); 
-  else{
-    ret[0]= 0;
-    c = ret[1];
-  }
+int grepFirstNumber(int c,FILE* datei,char* vname,char* str,int str_len,int* c_read){
+  c = mygetc(str,str_len,datei,c_read);
   while(isspace(c)) c = mygetc(str,str_len,datei,c_read);
   while(1){
     if(c == '-') {
@@ -346,14 +288,13 @@ int grepSecondNumber(int c,FILE* datei, char* vname,char* str,int str_len,int* c
 
 /****************************/
 /* Greps the Stepnumber and tells if there are more start/end point */ 
-void grepSteps(int* ret,int c,FILE* datei, char* vname,char* str,int str_len,int* c_read){
+int grepSteps(int c,FILE* datei, char* vname,char* str,int str_len,int* c_read){
   int nothing;
   int onlyone;
   int spaces;
   c = str[*c_read];
   nothing = 1;
   onlyone = 0;
-  ret[1]=0;
   spaces = 0;
   while(isspace(c)) c = mygetc(str,str_len,datei,c_read);
   if(c == '\\') c = mygetc(str,str_len,datei,c_read);
@@ -363,21 +304,16 @@ void grepSteps(int* ret,int c,FILE* datei, char* vname,char* str,int str_len,int
       vname++;
     }
     *vname = '\0';
-    ret[0]=0;
-    return; 
+    return 0;
   }
   else if (isdigit(c)){
     *vname='1';
     vname++;
     *vname='\0';
-    ret[0]=77;
-    ret[1]=c;
-    return;
+    return 77;
   }
-  else{
-    ret[0]=1;
-    return;
-  }
+  else
+    return 1;
   while(1){
     if(c == ';') {
       if(nothing==1){
@@ -385,8 +321,7 @@ void grepSteps(int* ret,int c,FILE* datei, char* vname,char* str,int str_len,int
         vname++;
       }
       *vname = '\0';
-      ret[0]=0;
-      return;
+      return 0;
     }
     else if (isspace(c)){
       if(onlyone){
@@ -399,9 +334,7 @@ void grepSteps(int* ret,int c,FILE* datei, char* vname,char* str,int str_len,int
       if (isdigit(c)){
         if(spaces){
           *vname= '\0';
-          ret[0]=77;
-          ret[1]=c;
-          return;
+          return 77;
         }
         else{
           *vname=c;
@@ -411,26 +344,22 @@ void grepSteps(int* ret,int c,FILE* datei, char* vname,char* str,int str_len,int
           c = mygetc(str,str_len,datei,c_read);
         }
       }
-      else{
-        ret[0]=1;
-        return;
-      }
+      else return 1;
     }
   }
-  ret[0]=1;
-  return;
+  return 2;
 }
 
 /****************************/
 /* return(VCOUNTER,PCOUNTER) */
-void grepModName(int c,FILE* datei, char* vname, char* pname,int* ret,char* str,int str_len,int* c_read){
+void grepModName(int c,FILE* datei, char* vname, char* pname,int* ret){
   int empt = 1;
   ret[0]=0;
   ret[1]=0;
   c = mygetc(str,str_len,datei,c_read);
-  while(isspace(c)) c = mygetc(str,str_len,datei,c_read);
+  while(isspace(c)) c = getc(datei);
   while(1){
-    if(isspace(c)) c = mygetc(str,str_len,datei,c_read);
+    if(isspace(c)) c = getc(datei);
     if(c == ';'){
       printf("The character ';' is not allowed in the name of a variable\n");
       exit(EXIT_FAILURE);
@@ -465,13 +394,13 @@ void grepModName(int c,FILE* datei, char* vname, char* pname,int* ret,char* str,
       *vname = c;
       ret[0]++;
       vname++;
-      c = mygetc(str,str_len,datei,c_read);
+      c = getc(datei);
     }
     if(c == '{'){
       *pname= c;
       ret[1]++;
       pname++;
-      while((c = mygetc(str,str_len,datei,c_read)) != '}'){
+      while((c = getc(datei)) != '}'){
         if(!(isspace(c))){
           *pname = c;
           ret[1]++;
@@ -481,8 +410,8 @@ void grepModName(int c,FILE* datei, char* vname, char* pname,int* ret,char* str,
       *pname = '}';
       ret[1]++;
       pname++;
-      c = mygetc(str,str_len,datei,c_read);
-      while(isspace(c)) c = mygetc(str,str_len,datei,c_read);
+      c = getc(datei);
+      while(isspace(c)) c = getc(datei);
       if(c == '+'){
         *pname = '+';
         ret[1]++;
@@ -490,7 +419,7 @@ void grepModName(int c,FILE* datei, char* vname, char* pname,int* ret,char* str,
         *vname = '+';
         ret[0]++;
         vname++;
-        c = mygetc(str,str_len,datei,c_read);
+        c = getc(datei);
       }
       else {
         *pname = '\0';
@@ -505,7 +434,7 @@ void grepModName(int c,FILE* datei, char* vname, char* pname,int* ret,char* str,
       ret[0]++;
       vname++;
       empt = 0;
-      c = mygetc(str,str_len,datei,c_read);
+      c = getc(datei);
     }
   }
   *pname = '\0';
@@ -516,12 +445,14 @@ void grepModName(int c,FILE* datei, char* vname, char* pname,int* ret,char* str,
 }
 
 /****************************/
-void grepVName(int c,FILE* datei, char* vname, int* ret,char* str,int str_len,int* c_read){
-  int empt = 1;
+void grepVName(FILE* datei, char* vname, int* ret){
+  int c;
+  int empt;
   ret[0]=0;
   ret[1]=0;
-  ret[2]=0;
-  while(isspace(c)) c = mygetc(str,str_len,datei,c_read);
+  c = getc(datei);
+  empt = 1;
+  while(isspace(c)) c = getc(datei);
   while(1){
     if(c == ';') {
       if(empt){
@@ -536,7 +467,7 @@ void grepVName(int c,FILE* datei, char* vname, int* ret,char* str,int str_len,in
       }
     }
     if(isspace(c)) {
-      while(isspace(c)) c = mygetc(str,str_len,datei,c_read);
+      while(isspace(c)) c = getc(datei);
       if(c == ';'){
         if(empt){
           printf("No text after ':' has been found");
@@ -555,7 +486,7 @@ void grepVName(int c,FILE* datei, char* vname, int* ret,char* str,int str_len,in
           ret[0]=-1;
           exit(EXIT_FAILURE);
         }
-        c = mygetc(str,str_len,datei,c_read);
+        c = getc(datei);
         *vname = '\0';
         ret[1]++;
         ret[0]=77;
@@ -565,7 +496,6 @@ void grepVName(int c,FILE* datei, char* vname, int* ret,char* str,int str_len,in
         *vname= '\0';
         ret[1]++;
         ret[0]=66;
-        ret[2]=c;
         return;
       }
     }
@@ -575,7 +505,7 @@ void grepVName(int c,FILE* datei, char* vname, int* ret,char* str,int str_len,in
         ret[0]=-1;
         exit(EXIT_FAILURE);
       }
-      c = mygetc(str,str_len,datei,c_read);
+      c = getc(datei);
       *vname = '\0';
       ret[1]++;
       ret[0]=77;
@@ -586,7 +516,7 @@ void grepVName(int c,FILE* datei, char* vname, int* ret,char* str,int str_len,in
       ret[1]++;
       vname++;
       empt = 0;
-      c = mygetc(str,str_len,datei,c_read);
+      c = getc(datei);
     }
   }
 return;
@@ -626,9 +556,9 @@ partition_t parse_partition(FILE* datei,int all,int paras){
   int fn,sn,st; /* Calculation of length */
   int name_right;
   int more_numbone;
-  int more_mv_names[3];
+  int more_numbtwo;
+  int more_mv_names[2];
   int* ind;
-  int doto[2];
   size_t* pset_fn;
   size_t* pset_sn;
   size_t* pset_st;
@@ -711,7 +641,7 @@ partition_t parse_partition(FILE* datei,int all,int paras){
     else if(charset_flag == 6 && c=='t') charset_flag++;
     else if(charset_flag == 7 && c==' ') charset_flag++;
     else if(charset_flag == 8){
-/*      fseek(datei, -1L, SEEK_CUR); */
+      fseek(datei, -1L, SEEK_CUR);
       name_right = grepName(c,datei,vname,str,str_len,&c_read);
       if( name_right == -1) exit(EXIT_FAILURE);
       lookup[i]=(char *) malloc(sizeof(char)*name_right);
@@ -719,13 +649,13 @@ partition_t parse_partition(FILE* datei,int all,int paras){
         lookup[i][temp]=vname[temp];
       }
       lookup[i][temp]='\0';
-      grepFirstNumber(doto,c,datei,first_number,str,str_len,&c_read);
+      grepFirstNumber(c,datei,first_number,str,str_len,&c_read);
       fn = charint(first_number);
       pset_fn[i]=charint(first_number);
       more_numbone = grepSecondNumber(c,datei,first_number,str,str_len,&c_read);
       pset_sn[i]=charint(first_number);
       sn = charint(first_number);
-      grepSteps(doto,c,datei,first_number,str,str_len,&c_read);
+      more_numbtwo = grepSteps(c,datei,first_number,str,str_len,&c_read);
       st = charint(first_number);
       pset_st[i]=charint(first_number);
       pset_leng[i]=(sn-fn)/st+1;
@@ -736,11 +666,11 @@ partition_t parse_partition(FILE* datei,int all,int paras){
         set_leng=set_leng *2;
         expand_set_table( set_leng, current_set_len, &lookup, &pset_leng, &pset_fn, &pset_sn, &pset_st);
       }
-      while(more_numbone == 77 || doto[0] == 77){
-/*        fseek(datei, -1L, SEEK_CUR); */
-        grepFirstNumber(doto,c,datei,first_number,str,str_len,&c_read);
+      while(more_numbone == 77 || more_numbtwo == 77){
+        fseek(datei, -1L, SEEK_CUR);
+        grepFirstNumber(c,datei,first_number,str,str_len,&c_read);
         more_numbone = grepSecondNumber(c,datei,second_number,str,str_len,&c_read);
-        grepSteps(doto,c,datei,step_number,str,str_len,&c_read);
+        more_numbtwo = grepSteps(c,datei,step_number,str,str_len,&c_read);
         temp = 0;
         lookup[i]=(char *) malloc(sizeof(char)*name_right);
         for(temp=0;vname[temp]!='\0';temp++){
@@ -780,7 +710,7 @@ partition_t parse_partition(FILE* datei,int all,int paras){
     else if(charpart_flag == 13 && c==' '){
       if(all!=1)current_pos =0;
       temp = 0;
-    /*  fseek(datei, -1L, SEEK_CUR); */
+      fseek(datei, -1L, SEEK_CUR);
       name_right = grepName(c,datei,vname,str,str_len,&c_read);
       /* check if 'all' is set */
       if(all==1){
@@ -791,9 +721,10 @@ partition_t parse_partition(FILE* datei,int all,int paras){
         name_right=4;
       }
       if( name_right == -1) exit(EXIT_FAILURE);
-      grepModName(c,datei,mod_name, pname,part_var_names_str_len,str,str_len,&c_read);
-      grepVName(c,datei,mod_v_name,more_mv_names,str,str_len,&c_read);
+      grepModName(datei,mod_name, pname,part_var_names_str_len);
+      grepVName(datei,mod_v_name,more_mv_names);
       while (more_mv_names[0] != 0){
+        fseek(datei, -1L, SEEK_CUR);
 
         ppart_name[j]=(char*) malloc(sizeof(char)*name_right);
         for(temp=0;vname[temp]!='\0';temp++)ppart_name[j][temp] = vname[temp];
@@ -813,7 +744,7 @@ partition_t parse_partition(FILE* datei,int all,int paras){
           ppart_var_name[j]=(char*) malloc(sizeof(char)*more_mv_names[1]);
           for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
           ppart_var_name[j][temp]='\0';
-/*          fprintf(stderr,"COMPARE:\n......%s\n......%s\n",mod_v_name,lookup[0]); */
+          
           ind = find_set(mod_v_name,lookup,current_set_len);
           temp_summe =0;
           for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
@@ -826,9 +757,10 @@ partition_t parse_partition(FILE* datei,int all,int paras){
           /* Extend Array if needed */
           if(j==part_leng){
             part_leng = part_leng*2;
+fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__);
             expand_part_table(&ppart_name,&ppart_var_name,&ppart_model_name,&ppart_parameter_name,partition_counter,part_leng,&ppart_fn,&ppart_sn);
           }
-          grepVName(more_mv_names[2],datei,mod_v_name,more_mv_names,str,str_len,&c_read);
+          grepVName(datei,mod_v_name,more_mv_names);
         }
         else if( more_mv_names[0] == 77) {
           
@@ -836,7 +768,6 @@ partition_t parse_partition(FILE* datei,int all,int paras){
           for(temp=0;mod_v_name[temp]!='\0';temp++) ppart_var_name[j][temp]=mod_v_name[temp];
           ppart_var_name[j][temp]='\0';
           
-/*          fprintf(stderr,"COMPARE:\n......%s\n......%s\n",mod_v_name,lookup[0]); */
           ind = find_set(mod_v_name,lookup,current_set_len);
           temp_summe =0;
           for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
@@ -849,11 +780,11 @@ partition_t parse_partition(FILE* datei,int all,int paras){
           /* Extend Array if needed */
           if(j==part_leng){
             part_leng = part_leng *2;
-/* fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__); */
+fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__);
             expand_part_table(&ppart_name,&ppart_var_name,&ppart_model_name,&ppart_parameter_name,partition_counter,part_leng,&ppart_fn,&ppart_sn);
           }
-          grepModName(c,datei,mod_name, pname,part_var_names_str_len,str,str_len,&c_read);
-          grepVName(c,datei,mod_v_name,more_mv_names,str,str_len,&c_read);
+          grepModName(datei,mod_name, pname,part_var_names_str_len);
+          grepVName(datei,mod_v_name,more_mv_names);
         }
       }
       /* Get new Memory and save char[] */
@@ -873,7 +804,6 @@ partition_t parse_partition(FILE* datei,int all,int paras){
       for(temp=0;pname[temp]!='\0';temp++) ppart_parameter_name[j][temp]= pname[temp];
       ppart_parameter_name[j][temp]='\0';
       
-/*           fprintf(stderr,"COMPARE:\n......%s\n......%s\n",mod_v_name,lookup[0]); */ 
       ind = find_set(mod_v_name,lookup,current_set_len);
       temp_summe =0;
       for(temp=1;temp<ind[0]+1;temp++)temp_summe+= pset_leng[ind[temp]];
@@ -886,7 +816,7 @@ partition_t parse_partition(FILE* datei,int all,int paras){
       /* Extend Array if needed */
       if(j==part_leng){
         part_leng = part_leng *2;
-/* fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__); */
+fprintf(stderr,"(%s:%d)\n",__FILE__,__LINE__);
         expand_part_table(&ppart_name,&ppart_var_name,&ppart_model_name,&ppart_parameter_name,partition_counter,part_leng,&ppart_fn,&ppart_sn);
       }
       charpart_flag = 0;
@@ -990,7 +920,6 @@ int main(int argc, char **argv) {
     printf("%lu...%lu",partition_table.start[i],partition_table.end[i]);
     printf("\n");
   }
-  protoss_build_nexus("hugo",&partition_table);
   destroy(&partition_table);
   return EXIT_SUCCESS;
 }
